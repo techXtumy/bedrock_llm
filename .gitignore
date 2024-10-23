@@ -1,0 +1,8 @@
+examples/__pycache__
+src/bedrock_llm/__pycache__
+src/bedrock_llm/config/__pycache__
+src/bedrock_llm/models/__pycache__
+src/bedrock_llm/schema/__pycache__
+src/bedrock_llm/types/__pycache__
+src/bedrock_llm/utils/__pycache__
+tests/__pycache__
