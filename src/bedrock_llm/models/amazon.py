@@ -1,6 +1,6 @@
 import json
 
-from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict
+from typing import Any, AsyncGenerator, Tuple, List, Dict, Literal
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
 
@@ -27,8 +27,19 @@ class TitanImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Tuple[str, Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None], None]:
+        """
+        Parse the response from the model into a stream of tokens.
+
+        Args:
+            stream (Any): The response from the model.
+
+        Yields:
+            Tuple[str, Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None]: 
+            A tuple containing:
+            - str: The token from the model.
+            - Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None: The completion reason, if any.
+        """
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            text = chunk["outputText"]
-            yield text
+            yield chunk["outputText"], chunk.get("completionReason")

@@ -70,13 +70,18 @@ class ClaudeImplementation(BaseModelImplementation):
                 elif chunk['delta']['type'] == 'input_json_delta':
                     text_chunk = chunk['delta']['partial_json']
                     tool_input += text_chunk
+            
             elif chunk['type'] == 'content_block_start':
                 id = chunk['content_block'].get('id')
                 name = chunk['content_block'].get('name')
+            
             elif chunk['type'] == 'content_block_stop':
                 if full_response != "":
                     message.content.append(
-                        TextBlock(type="text", text=full_response)
+                        TextBlock(
+                            type="text",
+                            text=full_response
+                        )
                     )
                     full_response = ""
                 else:
@@ -84,9 +89,15 @@ class ClaudeImplementation(BaseModelImplementation):
                         input_data = json.loads(tool_input)
                     except json.JSONDecodeError:
                         input_data = {}
-                    tool = ToolUseBlock(type="tool_use", id=id, name=name, input=input_data)
+                    tool = ToolUseBlock(
+                        type="tool_use",
+                        id=id, 
+                        name=name, 
+                        input=input_data
+                    )
                     message.content.append(tool)
                     tool_input = ""
+            
             elif chunk['type'] == 'message_delta':
                 stop_reason = chunk['delta']['stop_reason']
                 if stop_reason:

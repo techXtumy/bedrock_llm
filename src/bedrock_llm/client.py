@@ -10,6 +10,9 @@ from src.bedrock_llm.models.base import BaseModelImplementation
 from src.bedrock_llm.models.anthropic import ClaudeImplementation
 from src.bedrock_llm.models.meta import LlamaImplementation
 from src.bedrock_llm.models.amazon import TitanImplementation
+from src.bedrock_llm.models.ai21 import JambaImplementation
+from src.bedrock_llm.models.mistral import MistralInstructImplementation
+from src.bedrock_llm.models.mistral import MistralChatImplementation
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
@@ -67,6 +70,10 @@ class LLMClient:
             ModelName.TITAN_LITE: TitanImplementation(),
             ModelName.TITAN_EXPRESS: TitanImplementation(),
             ModelName.TITAN_PREMIER: TitanImplementation(),
+            ModelName.JAMBA_1_5_LARGE: JambaImplementation(),
+            ModelName.JAMBA_1_5_MINI: JambaImplementation(),
+            ModelName.MISTRAL_7B: MistralInstructImplementation(),
+            ModelName.MISTRAL_LARGE_2: MistralChatImplementation()
         }
         return implementations[self.model_name]
     
@@ -101,7 +108,8 @@ class LLMClient:
                     modelId=self.model_name,
                     accept="application/json",
                     contentType="application/json",
-                    body=json.dumps(request_body)
+                    body=json.dumps(request_body),
+                    trace="ENABLED"
                 )
                 
                 # Parse and yield the response
@@ -110,13 +118,14 @@ class LLMClient:
                     
                 break  # Success, exit retry loop
                 
-            except ClientError as e:
-                if e.response['Error']['Code'] == 'serviceUnavailableException':
-                    if attempt < self.retry_config.max_retries - 1:
-                        delay = self.retry_config.retry_delay * (2 ** attempt if self.retry_config.exponential_backoff else 1)
-                        await asyncio.sleep(delay)
-                        continue
-                raise
+            except (ClientError) as e:
+                if attempt < self.retry_config.max_retries - 1:
+                    delay = self.retry_config.retry_delay * (2 ** attempt if self.retry_config.exponential_backoff else 1)
+                    print(f"Attempt {attempt + 1} failed. Retrying in {delay} seconds...")
+                    await asyncio.sleep(delay)
+                else:
+                    print(f"Max retries reached. Error: {str(e)}")
+                    raise
 
         if attempt >= self.retry_config.max_retries - 1:
             raise Exception("Max retries reached. Unable to invoke model.")

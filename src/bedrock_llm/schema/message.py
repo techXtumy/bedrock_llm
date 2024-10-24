@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Literal, Dict
+from typing import List, Literal, Dict, Any
 
 from src.bedrock_llm.schema.cache import CacheControl
 
@@ -86,9 +86,14 @@ class TextBlock(BaseModel):
         ...     cache_control=CacheControl("ephemeral")
         ... )
     """
-    # cache_control: CacheControl | None = None
+    cache_control: CacheControl | None = None
     type: Literal["text"]
     text: str
+    
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
 
 
 class ImageBlock(BaseModel):
@@ -138,11 +143,16 @@ class ToolUseBlock(BaseModel):
         ...     input={"key": "value"}
         ... )
     """
-    # cache_control: CacheControl | None = None
+    cache_control: CacheControl | None = None
     type: Literal["tool_use"]
     id: str
     name: str
     input: Dict
+    
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
 
 
 class ToolResultBlock(BaseModel):
@@ -165,11 +175,37 @@ class ToolResultBlock(BaseModel):
         ...     content="The capital of France is Paris."
         ... )
     """
-    # cache_control: CacheControl | None = None
+    cache_control: CacheControl | None = None
     type: Literal["tool_result"]
     tool_use_id: str
     is_error: bool
     content: str
+    
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
+
+
+class ToolCallBlock(BaseModel):
+    """
+    Tool call block for the Jamba Model assistant role.
+
+    Attributes:
+        id (str): The ID of the tool call.
+        type (Literal["tool_call"]): The type of block, must be "tool_call". This param is only valid for **Jamba Model (AI21)**
+        function (Dict[str | Any]): The function call to make.
+
+    Example:
+        >>> tool_call_block = ToolCallBlock(
+        ...     id="tool_call_id",
+        ...     type="tool_call",
+        ...     function={"name": "tool_name", "arguments": {"key": "value"}}
+        ... )
+    """
+    id: str
+    type: str | None
+    function: Dict[str, Any]
 
 
 class MessageBlock(BaseModel):
@@ -178,12 +214,18 @@ class MessageBlock(BaseModel):
     Our models are trained to operate on alternating user and assistant conversational turns. 
     When creating a new Message, you specify the prior conversational turns with the messages parameter, 
     and the model then generates the next Message in the conversation. 
-    Consecutive `user` or `assistant` turns in your request will be combined into a single turn.
+    Consecutive `user` or `assistant` turns in your request will be combined into a single turn. 
+    The `tool` and `system` role turn is only for **Jamba Model (AI21)** and **Mistral Large Model**.
 
     Attributes:
-        role (Literal["user", "assistant"]): Whether this is a user prompt or an assistant response.
+        role (Literal["user", "assistant", "tool", "system"]): Whether this is a user prompt or an assistant response. The `tool` and `system` role is explicitly only for **Jamba Model (AI21)** and **Mistral Large Model**
         content (List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock] | str): The content of the message.
+        tool_calls (List[ToolCallBlock] | None):If the assistant called a tool as requested and successfully returned a result, include the tool call results here to enable context for future responses by the model. Explicitly only for **Jamba Model (AI21)** and **Mistral Large Model**. For Anthropic model, use `ToolUseBlock` inside the `content` instead.
+        tool_calls_id (str | None): The ID of the tool call after running the tool. This will act as a tool result ID for context. Explicitly only for **Jamba Model (AI21)**. For Anthropic model, use `ToolResultBlock` inside the `content` instead.
 
+    Note:
+        - For Anthropic model, use `ToolUseBlock` and `ToolResultBlock` inside the `content` instead of `tool_calls` and `tool_calls_id`.
+        
     Example:
         >>> message_block = MessageBlock(
         ...     role="user",
@@ -213,6 +255,40 @@ class MessageBlock(BaseModel):
         ...         )
         ...     ]
         ... )
+        
+        See more for Jamaba Model: https://docs.ai21.com/reference/jamba-15-api-ref
     """
-    role: Literal["user", "assistant"]
-    content: List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock] | str    
+    role: Literal["user", "assistant", "tool", "system"]
+    content: List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock] | str
+    tool_calls: List[ToolCallBlock] | None = None
+    tool_calls_id: str | None = None
+    
+    # Override model_dump to automatically exclude None and unset fields
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
+
+    # Override model_dump_json similarly
+    def model_dump_json(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump_json(**kwargs)
+
+
+class DocumentBlock(BaseModel):
+    """
+    Document block.
+
+    Attributes:
+        content (str): The content of the document.
+        metadata (List[Dict[Literal["key", "value"], str]]): The metadata of the document.
+
+    Example:
+        >>> document_block = DocumentBlock(
+        ...     content="This is a document.",
+        ...     metadata=[{"key": "source", "value": "example.com"}]
+        ... )
+    """
+    content: str
+    metadata: List[Dict[Literal["key", "value"], str]]

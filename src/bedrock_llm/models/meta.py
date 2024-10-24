@@ -17,8 +17,7 @@ class LlamaImplementation(BaseModelImplementation):
             "prompt": prompt,
             "max_gen_len": config.max_tokens,
             "temperature": config.temperature,
-            "top_p": config.top_p,
-            "stop_sequences": config.stop_sequences
+            "top_p": config.top_p
         }
     
     
@@ -28,5 +27,4 @@ class LlamaImplementation(BaseModelImplementation):
     ) -> AsyncGenerator[str, None]:
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            text = chunk["generation"]
-            yield text
+            yield chunk["generation"], chunk.get("stop_reason")

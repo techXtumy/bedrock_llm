@@ -10,10 +10,62 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.bedrock_llm.client import LLMClient
 from src.bedrock_llm.types.enums import ModelName
 from src.bedrock_llm.config.base import RetryConfig
-from src.bedrock_llm.config.model import ModelConfig
+from src.bedrock_llm.schema.message import MessageBlock
+import src.bedrock_llm.utils.prompt as prompt_utils
 
 
-async def main():
+# Function to handle user input asynchronously
+async def get_user_input(placeholder: str) -> str:
+    return input(placeholder)
+
+
+async def chat_with_titan():
+    
+    """
+    Read more about prompting for Titan Text:
+    https://d2eo22ngex1n9g.cloudfront.net/Documentation/User+Guides/Titan/Amazon+Titan+Text+Prompt+Engineering+Guidelines.pdf
+    """
+    
+    # Initialize the client
+    client = LLMClient(
+        region_name="us-east-1",
+        model_name=ModelName.TITAN_PREMIER,
+        retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
+    )
+    
+    # Initialize the chat history
+    chat_history = []
+    
+    # Receive first user input
+    input_prompt = await get_user_input("Enter a prompt: ")
+    
+    while True:
+
+        # Save the user input to chat history
+        chat_history.append(f"User: {input_prompt}\nBot: ")
+
+        # Simple text generation
+        print(chat_history, end="", flush=True)
+        async for chunk, stop_reason in client.generate(
+            prompt="".join(chat_history)
+        ):
+            if isinstance(chunk, str):
+                cprint(chunk, color="green", end="", flush=True)
+            if stop_reason:
+                cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+
+        # Save response to chat history
+        chat_history.append(f"{chunk}\n\n")
+        
+        # Check for bye bye
+        if input_prompt.lower() == "/bye":
+            break
+        
+        # Receive user input
+        input_prompt = await get_user_input("Enter a prompt: ")
+        
+
+async def chat_with_claude():
     # Initialize the client
     client = LLMClient(
         region_name="us-west-2",
@@ -21,50 +73,83 @@ async def main():
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
     
+    # Initialize the chat history
+    chat_history = []
     
-    # Simple text generation
-    async for chunk, stop_reason in client.generate(
-        prompt="Does abstract, OOP coding style slow down the process? If I have multiple async and yield, does that affect my code performance, increase latency in Python?"
-    ):
-        if isinstance(chunk, str):
-            cprint(chunk, color="green", end="", flush=True)
-        if stop_reason:
-            cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
-           
-     
-    # Using Claude with tools
-    system_prompt = "You are a helpful assistant."
-    message = "What is the weather like now?"
-    tool = {
-        "name": "get_weather",
-        "description": "Get the current weather",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA"
-                }
-            },
-            "required": ["location"]
-        }
-    }
+    while True:
+        
+        # Receive user input
+        input_prompt = await get_user_input("Enter a prompt: ")
+        
+        # Save the user input to chat history
+        chat_history.append(
+            MessageBlock(
+                role="user", 
+                content=input_prompt
+            ).model_dump()
+        )
+        
+        # Simple text generation
+        async for chunk, stop_reason in client.generate(
+            prompt=chat_history
+        ):
+            if isinstance(chunk, str):
+                cprint(chunk, color="green", end="", flush=True)
+            if stop_reason:
+                cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+        
+        # Save response to chat history
+        chat_history.append(chunk.model_dump())
+        
+        # Check for bye bye
+        if input_prompt.lower() == "/bye":
+            break
+
+
+async def chat_with_llama():
+    # Initialize the client
+    client = LLMClient(
+        region_name="us-west-2",
+        model_name=ModelName.LLAMA_3_2_1B,
+        retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
+    )
     
-    config = ModelConfig(temperature=0.7, max_tokens=512)
-    async for chunk, stop_reason in client.generate(
-        prompt=message,
-        config=config,
-        system=system_prompt,
-        tools=tool
-    ):
-        if isinstance(chunk, str):
-            cprint(chunk, color="green", end="", flush=True)
-        if stop_reason == "end_turn":
-            cprint(f"\nGeneration stopped: {stop_reason}", color="cyan")
-            print("Weather today: 36'C in Hanoi.")
-        elif stop_reason:
-            cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+    # Initialize the chat history as a list for efficient string handling
+    chat_history = []
+    
+    # Predefine the system message to avoid repetition
+    system = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful AI assistant<|eot_id|>"
+    chat_history.append(system)
+
+    while True:
+        # Get user input asynchronously
+        input = await get_user_input("Enter a prompt: ")
+        
+        # Format and save user message to chat history
+        formatted_msg = f"<|start_header_id|>user<|end_header_id|>{input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+        chat_history.append(formatted_msg)
+        
+        # Generate a response from the model
+        async for chunk, stop_reason in client.generate(prompt="".join(chat_history)):
+            if isinstance(chunk, str):
+                cprint(chunk, color="green", end="", flush=True)
+            if stop_reason:
+                cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+        
+        # Append the bot response to chat history
+        chat_history.append(f"{chunk}<|eot_id|>")
+        
+        # Exit if user types "/bye"
+        if input.lower() == "/bye":
+            break
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    
+    mode_selection = input("Select mode (1 for Claude, 2 for Titan, 3 for Llama): ")
+    if mode_selection == "1":
+        asyncio.run(chat_with_claude())
+    elif mode_selection == "2":
+        asyncio.run(chat_with_titan())
+    elif mode_selection == "3":
+        asyncio.run(chat_with_llama())
