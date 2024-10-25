@@ -100,22 +100,19 @@ async def main():
         
         
     # Using Jamba model
-    # """
-    # Currently error from Bedrock provider.
-    # """
-    # jamba_client = LLMClient(
-    #     region_name="us-east-1",
-    #     model_name=ModelName.JAMBA_1_5_MINI,
-    #     retry_config=retry_config
-    # )
-    # async for message, stop_reason in jamba_client.generate(
-    #     prompt=llama_prompt,
-    #     config=config
-    # ):
-    #     cprint(message, color="yellow", end="", flush=True)
-    #     if stop_reason:
-    #         cprint(f"\n{stop_reason}", color="red")
-    #         break
+    jamba_client = LLMClient(
+        region_name="us-east-1",
+        model_name=ModelName.JAMBA_1_5_MINI,
+        retry_config=retry_config
+    )
+    async for message, stop_reason in jamba_client.generate(
+        prompt=prompt,
+        config=config
+    ):
+        cprint(message, color="grey", end="", flush=True)
+        if stop_reason:
+            cprint(f"\n{stop_reason}", color="red")
+            break
         
         
     # Using Mistral 7B Instruct model

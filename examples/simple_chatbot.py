@@ -11,7 +11,6 @@ from src.bedrock_llm.client import LLMClient
 from src.bedrock_llm.types.enums import ModelName
 from src.bedrock_llm.config.base import RetryConfig
 from src.bedrock_llm.schema.message import MessageBlock
-import src.bedrock_llm.utils.prompt as prompt_utils
 
 
 # Function to handle user input asynchronously
@@ -110,7 +109,7 @@ async def chat_with_llama():
     # Initialize the client
     client = LLMClient(
         region_name="us-west-2",
-        model_name=ModelName.LLAMA_3_2_1B,
+        model_name=ModelName.LLAMA_3_2_90B,
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
     
@@ -118,7 +117,7 @@ async def chat_with_llama():
     chat_history = []
     
     # Predefine the system message to avoid repetition
-    system = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful AI assistant<|eot_id|>"
+    system = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful AI assistant<|eot_id|>"
     chat_history.append(system)
 
     while True:
@@ -126,7 +125,7 @@ async def chat_with_llama():
         input = await get_user_input("Enter a prompt: ")
         
         # Format and save user message to chat history
-        formatted_msg = f"<|start_header_id|>user<|end_header_id|>{input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+        formatted_msg = f"<|start_header_id|>user<|end_header_id|>\n\n{input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
         chat_history.append(formatted_msg)
         
         # Generate a response from the model
@@ -144,12 +143,49 @@ async def chat_with_llama():
             break
 
 
+async def chat_with_mistral():
+    # Initialize the client
+    client = LLMClient(
+        region_name="us-west-2",
+        model_name=ModelName.MISTRAL_7B,
+        retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
+    )
+    
+    chat_history = []
+    
+    # Predefine the system message to avoid repetition
+    system = "<s>[INST] You are a helpful AI assistant that can answer and keep the conversation going.\n\n"
+    chat_history.append(system)
+
+    while True:
+        input = await get_user_input("Enter a prompt: ")
+        
+        # Format and save user message to chat history
+        formatted_msg = f"{input} [/INST] "
+        chat_history.append(formatted_msg)
+        
+        # Generate a response from the model
+        async for chunk, stop_reason in client.generate(prompt="".join(chat_history)):
+            if isinstance(chunk, str):
+                cprint(chunk, color="green", end="", flush=True)
+            if stop_reason:
+                cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+        
+        # Append the bot response to chat history
+        chat_history.append(f"{chunk} </s>[INST] ")
+        
+        if input.lower() == "/bye":
+            break
+
+
 if __name__ == "__main__":
     
-    mode_selection = input("Select mode (1 for Claude, 2 for Titan, 3 for Llama): ")
+    mode_selection = input("Select mode (1 for Claude, 2 for Titan, 3 for Llama, and 4 for Mistral): ")
     if mode_selection == "1":
         asyncio.run(chat_with_claude())
     elif mode_selection == "2":
         asyncio.run(chat_with_titan())
     elif mode_selection == "3":
         asyncio.run(chat_with_llama())
+    elif mode_selection == "4":
+        asyncio.run(chat_with_mistral())

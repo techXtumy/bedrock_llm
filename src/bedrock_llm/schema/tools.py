@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Literal, Dict, List, Optional
+from src.bedrock_llm.schema.cache import CacheControl
 
 
 class PropertyAttr(BaseModel):
@@ -17,7 +18,13 @@ class PropertyAttr(BaseModel):
         ... )
     """
     type: Literal["string", "integer", "float", "boolean"]
+    enum: List[str] | None = None
     description: str
+    
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
 
 
 class InputSchema(BaseModel):
@@ -45,6 +52,11 @@ class InputSchema(BaseModel):
     properties: Dict | None = None
     required: List[str] | None = None
     
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
+    
 
 class ToolMetadata(BaseModel):
     """
@@ -65,8 +77,13 @@ class ToolMetadata(BaseModel):
         this is less important than having a clear and comprehensive explanation of the tool’s purpose and parameters. 
         Only add examples after you’ve fully fleshed out the description.
     """
-    # type: Literal["custom"] | None = None
+    type: Literal["custom"] | None = None
     name: str
     description: Optional[str]
     input_schema: InputSchema
-    # cache_control: CacheControl | None = None
+    cache_control: CacheControl | None = None
+    
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
