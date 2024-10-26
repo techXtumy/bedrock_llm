@@ -25,6 +25,12 @@ class LlamaImplementation(BaseModelImplementation):
         self, 
         stream: Any
     ) -> AsyncGenerator[str, None]:
+        full_answer = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            yield chunk["generation"], chunk.get("stop_reason")
+            if chunk.get("stop_reason") is not None:
+                yield "".join(full_answer), chunk.get("stop_reason")
+            else:
+                yield chunk["generation"], None
+                full_answer.append(chunk["generation"])
+        return

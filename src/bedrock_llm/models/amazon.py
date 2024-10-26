@@ -40,6 +40,11 @@ class TitanImplementation(BaseModelImplementation):
             - str: The token from the model.
             - Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None: The completion reason, if any.
         """
+        full_response = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            yield chunk["outputText"], chunk.get("completionReason")
+            yield chunk["outputText"], None
+            full_response.append(chunk["outputText"])
+            if chunk["completionReason"]:
+                yield "".join(full_response), chunk["completionReason"]
+        return

@@ -9,7 +9,7 @@ from termcolor import cprint
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.bedrock_llm.client import LLMClient, ModelName
-from src.bedrock_llm.utils.prompt import llama_format, mistral_format
+from src.bedrock_llm.utils.prompt import llama_format, mistral_format, titan_format
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.config.base import RetryConfig
 
@@ -17,10 +17,11 @@ from src.bedrock_llm.config.base import RetryConfig
 async def main():
     
     # Prompt format
-    prompt = "Who are you?."
-    system = "You are a helpful AI"
+    prompt = "Bạn là ai?."
+    system = "You are a helpful AI. Answer only in Vietnamese"
     llama_prompt = llama_format(prompt, system)
     mistral_prompt = mistral_format(prompt, system)
+    titan_prompt = titan_format(prompt, system)
     config = ModelConfig(
         temperature=0.9,
         max_tokens=512,
@@ -67,7 +68,7 @@ async def main():
         )
         print("Model: ", model)
         async for message, stop_reason in titan_client.generate(
-            prompt=prompt,
+            prompt=titan_prompt,
             config=config
         ):
             cprint(message, color="cyan", end="", flush=True)
@@ -100,19 +101,21 @@ async def main():
         
         
     # Using Jamba model
-    jamba_client = LLMClient(
-        region_name="us-east-1",
-        model_name=ModelName.JAMBA_1_5_MINI,
-        retry_config=retry_config
-    )
-    async for message, stop_reason in jamba_client.generate(
-        prompt=prompt,
-        config=config
-    ):
-        cprint(message, color="grey", end="", flush=True)
-        if stop_reason:
-            cprint(f"\n{stop_reason}", color="red")
-            break
+    for model in [ModelName.JAMBA_1_5_MINI]:
+        jamba_client = LLMClient(
+            region_name="us-east-1",
+            model_name=model,
+            retry_config=retry_config
+        )
+        print("Model: ", model)
+        async for message, stop_reason in jamba_client.generate(
+            prompt=prompt,
+            config=config
+        ):
+            cprint(message, color="grey", end="", flush=True)
+            if stop_reason:
+                cprint(f"\nGeneration stopped: {stop_reason}", color="red")
+                break
         
         
     # Using Mistral 7B Instruct model

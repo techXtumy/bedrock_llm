@@ -88,7 +88,12 @@ class MistralInstructImplementation(BaseModelImplementation):
         self, 
         stream: Any
     ) -> AsyncGenerator[str, None]:
+        full_response = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            chunk = chunk["outputs"][0]
-            yield chunk["text"], chunk["stop_reason"]
+            txt_chunk = chunk["outputs"][0]
+            yield txt_chunk["text"], None
+            full_response.append(txt_chunk["text"])
+            if txt_chunk["stop_reason"]:
+                yield "".join(full_response), txt_chunk["stop_reason"]
+        return

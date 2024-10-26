@@ -14,7 +14,7 @@ from src.bedrock_llm.models.ai21 import JambaImplementation
 from src.bedrock_llm.models.mistral import MistralInstructImplementation
 from src.bedrock_llm.models.mistral import MistralChatImplementation
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ReadTimeoutError
 
 from typing import Dict, Any, AsyncGenerator, Tuple, Optional, List
 
@@ -118,7 +118,7 @@ class LLMClient:
                     
                 break  # Success, exit retry loop
                 
-            except (ClientError) as e:
+            except (ReadTimeoutError, ClientError) as e:
                 if attempt < self.retry_config.max_retries - 1:
                     delay = self.retry_config.retry_delay * (2 ** attempt if self.retry_config.exponential_backoff else 1)
                     print(f"Attempt {attempt + 1} failed. Retrying in {delay} seconds...")

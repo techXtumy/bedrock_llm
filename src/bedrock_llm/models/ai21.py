@@ -1,7 +1,9 @@
+import json
+
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock
+from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock, TextBlock
 
 
 class JambaImplementation(BaseModelImplementation):
@@ -42,6 +44,8 @@ class JambaImplementation(BaseModelImplementation):
                     content=prompt
                 ).model_dump()
             ]
+        else:
+            messages = prompt
         
         if system is not None:
             system = MessageBlock(
@@ -59,8 +63,6 @@ class JambaImplementation(BaseModelImplementation):
             "temperature": config.temperature,
             "stop": config.stop_sequences,
             "n": config.number_of_responses,
-            "frequency_penalty": config.frequency_penalty,
-            "presence_penalty": config.presence_penalty,
         }
         
         # Conditionally add tools if it is not None
@@ -79,8 +81,37 @@ class JambaImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[Tuple[str, None], None]:
+    ) -> AsyncGenerator[Tuple[str | MessageBlock, Optional[str]], None]:
+        """
+        Parse the response from the AI21 API.
+
+        Args:
+            stream (Any): The response from the AI21 API.
+
+        Yields:
+            Tuple[str, None]: The generated text and None.
+
+        Raises:
+            ValueError: If the response is not a dictionary.
+            ValueError: If the response does not contain the expected keys.
+
+        See more: https://docs.ai21.com/reference/jamba-15-api-ref
+        
+        I have not do the tool calling.
+        """
+        full_answer = []
+        
         for event in stream:
-            # chunk = json.loads(event["chunk"]["bytes"])
-            yield event
-            # yield chunk["completions"][0]["data"]["text"], None
+            chunk = json.loads(event["chunk"]["bytes"])
+            if chunk.get("choices"):
+                text_chunk = chunk["choices"][0]["delta"].get("content")
+                stop_reason = chunk["choices"][0]["finish_reason"]
+                if text_chunk:
+                    yield text_chunk, None
+                    full_answer.append(text_chunk)
+                elif stop_reason:
+                    yield MessageBlock(
+                        role="assistant", 
+                        content="".join(full_answer)
+                        ), stop_reason
+        return

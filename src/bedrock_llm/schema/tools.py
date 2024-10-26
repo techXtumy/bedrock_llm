@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from typing import Literal, Dict, List, Optional
 from src.bedrock_llm.schema.cache import CacheControl
 
@@ -35,8 +35,8 @@ class InputSchema(BaseModel):
     
     Attributes:
         type (Literal["object"]): The type of input schema.
-        properties (Dict | None): A dictionary of property names and their corresponding schemas.
-        required (List[str] | None): A list of property names that are required.
+        properties (Dict | None): A dictionary of property names and their corresponding schemas. If nothing, put empty Dict
+        required (List[str] | None): A list of property names that are required. If nothing, put empty List
 
     Example:
         >>> input_schema = InputSchema(
@@ -48,18 +48,36 @@ class InputSchema(BaseModel):
         ...     required=["name"]
         ... )
     """
-    type: Literal["object"]
-    properties: Dict | None = None
-    required: List[str] | None = None
+    type: Literal["object", "dict"]
+    properties: Dict
+    required: List[str]
+   
     
-    def model_dump(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_unset', True)
-        return super().model_dump(**kwargs)
-    
-
-class ToolMetadata(BaseModel):
+class ClaudeToolMetadata(BaseModel):
     """
+    Metadata for a Claude tool.
+
+    Attributes:
+        type (Literal["custom", "computer_20241022", "text_editor_20241022", "bash_20241022"] | None): The type of tool, only valid for 3.5 new Sonnet
+        name (str): The name of the tool.
+        description (str): The description of the tool.
+        parameters (InputSchema | None): The parameters for the tool.
+        cache_control (CacheControl | None): The cache control for the tool.
+
+    Example:
+        >>> tool_metadata = ToolMetadata(
+        ...     name="PersonInfo",
+        ...     description="Get information about a person",
+        ...     input_schema=InputSchema(
+        ...         type="object",
+        ...         properties={
+        ...             "name": PropertyAttr(type="string", description="The name of the person"),
+        ...             "age": PropertyAttr(type="integer", description="The age of the person")
+        ...         },
+        ...         required=["name"]
+        ...     )
+        ... )
+    
     ## Best practices for tool definitions
     To get the best performance out of Claude when using tools, follow these guidelines:
 
@@ -77,13 +95,47 @@ class ToolMetadata(BaseModel):
         this is less important than having a clear and comprehensive explanation of the tool’s purpose and parameters. 
         Only add examples after you’ve fully fleshed out the description.
     """
-    type: Literal["custom"] | None = None
+    type: Optional[Literal["custom", "computer_20241022", "text_editor_20241022", "bash_20241022"]] = None
     name: str
-    description: Optional[str]
-    input_schema: InputSchema
+    description: str
+    input_schema: Optional[InputSchema]
     cache_control: CacheControl | None = None
     
     def model_dump(self, **kwargs):
         kwargs.setdefault('exclude_none', True)
         kwargs.setdefault('exclude_unset', True)
         return super().model_dump(**kwargs)
+
+
+class LlamaToolMetadata(BaseModel):
+    """
+    Metadata for a Llama tool.
+
+    Attributes:
+        name (str): The name of the tool.
+        description (str): The description of the tool.
+        parameters (InputSchema): The parameters for the tool.
+
+    Example:
+        >>> tool_metadata = LlamaToolMetadata(
+        ...     function="PersonInfo",
+        ...     description="Get information about a person",
+        ...     parameters=LlamaInputSchema(
+        ...         type="object",
+        ...         required=["name"],
+        ...         properties={
+        ...             "name": PropertyAttr(type="string", description="The name of the person"),
+        ...             "age": PropertyAttr(type="integer", description="The age of the person")
+        ...         }
+        ...     )
+        ... )
+        
+    Read more: https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/text_prompt_format.md
+    """
+    name: str
+    description: str
+    parameters: InputSchema
+ 
+
+
+    

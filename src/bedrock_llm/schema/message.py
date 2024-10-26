@@ -209,7 +209,7 @@ class ToolCallBlock(BaseModel):
 
 
 class MessageBlock(BaseModel):
-    """Input messages.
+    """Input messages. **Only for Chat Model**
 
     Our models are trained to operate on alternating user and assistant conversational turns. 
     When creating a new Message, you specify the prior conversational turns with the messages parameter, 

@@ -44,13 +44,12 @@ async def chat_with_titan():
         chat_history.append(f"User: {input_prompt}\nBot: ")
 
         # Simple text generation
-        print(chat_history, end="", flush=True)
         async for chunk, stop_reason in client.generate(
             prompt="".join(chat_history)
         ):
-            if isinstance(chunk, str):
+            if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
-            if stop_reason:
+            else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
 
         # Save response to chat history
@@ -92,9 +91,9 @@ async def chat_with_claude():
         async for chunk, stop_reason in client.generate(
             prompt=chat_history
         ):
-            if isinstance(chunk, str):
+            if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
-            if stop_reason:
+            else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
         
         # Save response to chat history
@@ -113,6 +112,7 @@ async def chat_with_llama():
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
     
+
     # Initialize the chat history as a list for efficient string handling
     chat_history = []
     
@@ -130,9 +130,9 @@ async def chat_with_llama():
         
         # Generate a response from the model
         async for chunk, stop_reason in client.generate(prompt="".join(chat_history)):
-            if isinstance(chunk, str):
+            if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
-            if stop_reason:
+            else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
         
         # Append the bot response to chat history
@@ -166,9 +166,9 @@ async def chat_with_mistral():
         
         # Generate a response from the model
         async for chunk, stop_reason in client.generate(prompt="".join(chat_history)):
-            if isinstance(chunk, str):
+            if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
-            if stop_reason:
+            else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
         
         # Append the bot response to chat history
@@ -178,14 +178,49 @@ async def chat_with_mistral():
             break
 
 
+async def chat_with_jamba():
+    # Initialize the client
+    client = LLMClient(
+        region_name="us-east-1",
+        model_name=ModelName.JAMBA_1_5_MINI,
+        retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
+    )
+
+    chat_history = []
+
+    while True:
+        input = await get_user_input("Enter a prompt: ")
+        
+        chat_history.append(MessageBlock(
+            role="user",
+            content=input
+        ).model_dump())
+
+        # Generate a response from the model
+        async for chunk, stop_reason in client.generate(prompt=chat_history):
+            if stop_reason is None:
+                cprint(chunk, color="green", end="", flush=True)
+            else:
+                cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+
+        # Append the bot response to chat history
+        chat_history.append(chunk.model_dump())
+        
+        # Check for bye bye
+        if input.lower() == "/bye":
+            break
+
+
 if __name__ == "__main__":
     
-    mode_selection = input("Select mode (1 for Claude, 2 for Titan, 3 for Llama, and 4 for Mistral): ")
-    if mode_selection == "1":
+    model_selection = input("Select model (1 for Claude, 2 for Titan, 3 for Llama, 4 for Mistral and 5 for Jamba): ")
+    if model_selection == "1":
         asyncio.run(chat_with_claude())
-    elif mode_selection == "2":
+    elif model_selection == "2":
         asyncio.run(chat_with_titan())
-    elif mode_selection == "3":
+    elif model_selection == "3":
         asyncio.run(chat_with_llama())
-    elif mode_selection == "4":
+    elif model_selection == "4":
         asyncio.run(chat_with_mistral())
+    elif model_selection == "5":
+        asyncio.run(chat_with_jamba())
