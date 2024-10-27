@@ -1,5 +1,6 @@
 import json
 import uuid
+import re
 
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional
 
@@ -91,19 +92,44 @@ class JambaImplementation(BaseModelImplementation):
 
 
     @staticmethod
-    def _process_tool_calls(tool_calls_json: str) -> List[ToolCallBlock]:
-        """Process and validate tool calls JSON."""
+    def _process_tool_calls(tool_calls_json: str) -> List[str]:
+        """Process and transform tool calls JSON to the required format."""
         try:
-            tool_calls_data = json.loads(tool_calls_json)
-            return [
-                ToolCallBlock(
-                    id=uuid.uuid4().hex,
-                    type="function",
-                    function=tool_call,
-                ) for tool_call in tool_calls_data
-            ]
+            # Step 1: Check if it uses single quotes instead of double quotes
+            if "'" in tool_calls_json and '"' not in tool_calls_json:
+                # Replace single quotes with double quotes
+                cleaned_data = tool_calls_json.replace("'", '"')
+            else:
+                cleaned_data = tool_calls_json.strip()
+
+            # Step 2: Remove any extraneous whitespace
+            cleaned_data = re.sub(r'\s+', ' ', cleaned_data)
+
+            # Step 3: Attempt to parse with json.loads()
+            tool_calls_data = json.loads(cleaned_data)
+
+            # Ensure it's a list, as expected
+            if not isinstance(tool_calls_data, list):
+                print("Expected a list, but got:", type(tool_calls_data))
+                return []
+
+            result = []
+            for tool_call in tool_calls_data:
+                call_id = tool_call.get("id")
+                function_name = tool_call.get("function", {}).get("name")
+                arguments = tool_call.get("function", {}).get("arguments", {})
+
+                # Construct the function call string with arguments
+                args_str = ', '.join([f'{key}="{value}"' for key, value in arguments.items()])
+                function_call = f'{function_name}({args_str})'
+
+                # Append to result in the desired format
+                result.append([call_id, function_call])
+
+            return result
+
         except json.JSONDecodeError:
-            print("Error decoding tool calls")
+            print(f"Error decoding tool calls {tool_calls_json}")
             return []
 
 
@@ -123,10 +149,7 @@ class JambaImplementation(BaseModelImplementation):
             - (str, None): Regular text chunks
             - (MessageBlock, str): Final message with optional tool calls and stop reason
         """
-        full_answer: List[str] = []
-        buffer: List[str] = []
-        capturing_tool_calls = False
-        tool_calls = None
+        full_answer = []
 
         for event in stream:
             try:
@@ -134,44 +157,11 @@ class JambaImplementation(BaseModelImplementation):
                 text_chunk, stop_reason = self._extract_chunk_data(chunk)
                 
                 if stop_reason:
-                    yield MessageBlock(
-                        role="assistant",
-                        content="".join(full_answer).strip(),
-                        tool_calls=tool_calls
-                    ), stop_reason
+                    yield "".join(full_answer), stop_reason
 
                 if not text_chunk:
-                    continue
-
-                if "<tool_calls>" in text_chunk:
-                    capturing_tool_calls = True
-                    content_after_tag = text_chunk.split("<tool_calls>")[1]
-                    buffer.append(content_after_tag)
                     yield text_chunk, None
-                    continue
-
-                if "</tool_calls>" in text_chunk and capturing_tool_calls:
-                    capturing_tool_calls = False
-                    content_before_tag = text_chunk.split("</tool_calls>")[0]
-                    buffer.append(content_before_tag)
                     
-                    tool_calls = self._process_tool_calls("".join(buffer).strip())
-                    buffer.clear()
-                    
-                    text_chunk = text_chunk.split("</tool_calls>")[1]
-                    stop_reason = "tool_call"
-
-                elif capturing_tool_calls:
-                    buffer.append(text_chunk)
-                    continue
-
-                if text_chunk:
-                    yield text_chunk, None
-                    full_answer.append(text_chunk)
-
-            except json.JSONDecodeError:
-                print(f"Error decoding chunk: {event}")
-                continue
             except Exception as e:
                 print(f"Unexpected error processing chunk: {str(e)}")
                 continue

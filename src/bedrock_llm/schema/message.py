@@ -259,7 +259,7 @@ class MessageBlock(BaseModel):
         See more for Jamaba Model: https://docs.ai21.com/reference/jamba-15-api-ref
     """
     role: Literal["user", "assistant", "tool", "system"]
-    content: List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock] | str
+    content: List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock | List] | str
     tool_calls: List[ToolCallBlock] | None = None
     tool_calls_id: str | None = None
     

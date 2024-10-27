@@ -1,4 +1,5 @@
 examples/__pycache__
+examples/email_agent/__pycache__
 examples/email_agent/.env
 src/bedrock_llm/__pycache__
 src/bedrock_llm/config/__pycache__

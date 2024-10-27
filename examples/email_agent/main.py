@@ -1,18 +1,10 @@
 import asyncio
 import sys
 import os
-import pytz
 import json
-import boto3
-import dotenv
-
-from botocore.exceptions import ClientError
-from aiobotocore.session import get_session
+import traceback
 
 from termcolor import cprint
-from datetime import datetime
-import xml.etree.ElementTree as ET
-
 # Add the parent directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
@@ -20,9 +12,10 @@ from src.bedrock_llm.client import LLMClient
 from src.bedrock_llm.types.enums import ModelName
 from src.bedrock_llm.config.base import RetryConfig
 from src.bedrock_llm.config.model import ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock, ToolUseBlock, TextBlock, ToolResultBlock, ToolCallBlock
+from src.bedrock_llm.schema.message import MessageBlock
+from utils import get_user_input
 
-from typing import Literal, List, Optional, Callable, Coroutine, Any
+from typing import Coroutine, List
 
 """
 Watch this video for connecting to Outlook
@@ -30,7 +23,6 @@ Watch this video for connecting to Outlook
 https://www.youtube.com/watch?v=7Cve_k4C_Ts
 """
 
-dotenv.load_dotenv()
 
 model_config = ModelConfig(
     temperature=0.6,
@@ -41,214 +33,136 @@ retry_config = RetryConfig(
     max_retries=3,
     retry_delay=0.5
 )
-runtime = boto3.client(
-    "bedrock-agent-runtime", 
-    region_name=os.environ.get("BEDROCK_REGION")
-)
-ses_client = boto3.client(
-    'ses',
-    region_name=os.environ.get("SES_REGION")
-)
 
-chat_history = []
-tool_metadata_list = [
-        {
-            "type": "function",
-            "function": {
-                "name": "send_email",
-                "description": "Send an email to a specified email address",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "description": "The email address to send the email to"
-                        },
-                        "subject": {
-                            "type": "string",
-                            "description": "The subject of the email"
-                        },
-                        "body": {
-                            "type": "string",
-                            "description": "The body of the email. You need to generate this yourself"
-                        }
-                    },
-                    "required": ["email", "subject", "body"]
-                }
-            }
-        }, 
-        {
-            "type": "function",
-            "function": {
-                "name": "retrieve_information",
-                "description": "Retrieve informations from the HR company Policies Knowledge Base",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The query for searching for the information"
-                        }
-                    },
-                    "required": ["query"]
-                }
-            }
-        }
-    ]
-system = f"""You are a helpful assistant. This is the real time data {datetime.now(tz = pytz.timezone("Asia/Bangkok")).strftime('%Y-%m-%d %H:%M:%S %Z')}.
-My name is Phicks, my working email is an.tq@techxcorp.com.
-My boss name is Duy, my boss email is mineran2003@gmailcom.
-I am working as Data Scientist at TechX Corporation.
-
-Here is a list of functions in JSON format that you can invoke.
-Please call the model follow by your own instruction that you have trained on.
-{tool_metadata_list}"""
-
-
-async def get_user_input(
-    placeholder: str
-) -> str:
-    return input(placeholder)
-
-
-async def send_email(
-    sender_email: str,
-    recipient_email: str,
-    subject: str,
-    body_text: str,
-):
-    session = get_session()
-    async with session.create_client('ses', os.environ.get("SES_REGION")) as ses_client:
-        try:
-            response = await ses_client.send_email(
-                Source=sender_email,
-                Destination={
-                    'ToAddresses': [recipient_email]
-                },
-                Message={
-                    'Subject': {
-                        'Data': subject
-                    },
-                    'Body': {
-                        'Text': {
-                            'Data': body_text
-                        }
-                    }
-                }
-            )
-            
-            if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                return ("Email sent successfully!")
-            else:
-                return (f"Failed to send email. Error: {response}")
-        except ClientError as e:
-            return ("Sending Email error:", e.response['Error']['Message'])
-
-
-async def retrieve_information(query: str):
-    kwargs = {
-        "knowledgeBaseId": "VSR83TL8CR",
-        "retrievalConfiguration": {
-            "vectorSearchConfiguration": {
-                "numberOfResults": 25,
-                "overrideSearchType": "HYBRID"
-            }
+tool_metadata_list = [{ 
+    "name": "send_email",
+    "description": "Sends an email with the specified details.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "sender_email": {
+                "type": "string",
+                "description": "Email address of the sender."
+            },
+            "recipient_email": {
+                "type": "string",
+                "description": "Email address of the recipient."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Subject of the email."
+            },
+            "body": {
+                "type": "string",
+                "description": "Content/body of the email."
+            },
         },
-        "retrievalQuery": {
-            "text": query
-        }
+        "required": [
+            "sender_email",
+            "recipient_email",
+            "subject",
+            "body"
+        ]
     }
-    
-    # Run boto3 call in a thread pool since it's blocking
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, lambda: runtime.retrieve(**kwargs))
-    return build_context_kb_prompt(result)
+}]
 
+tools = []
+for i in tool_metadata_list:
+    tools.append(str(i))
 
-def build_context_kb_prompt(
-    retrieved_json_file, 
-    min_relevant_percentage: float = 0.3, 
-    debug=False
-):
-    if not retrieved_json_file:
-        return ""
-    
-    documents = ET.Element("documents")
-    
-    if retrieved_json_file["ResponseMetadata"]["HTTPStatusCode"] != 200:
-        documents.text = "Error in getting data source from knowledge base. No context is provided"
-    else:
-        body = retrieved_json_file["retrievalResults"]
-        for i, context_block in enumerate(body):
-            if context_block["score"] < min_relevant_percentage:
-                break
-            document = ET.SubElement(documents, "document", {"index": str(i + 1)})
-            source = ET.SubElement(document, "source")
-            content = ET.SubElement(document, "document_content")
-            source.text = iterate_through_location(context_block["location"])
-            content.text = context_block["content"]["text"]
-    
-    return ET.tostring(documents, encoding="unicode", method="xml")
-
-
-def iterate_through_location(location: dict):
-    # Optimize by stopping early if uri or url is found
-    for loc_data in location.values():
-        if isinstance(loc_data, dict):
-            uri = loc_data.get("uri")
-            if uri:
-                return uri
-            url = loc_data.get("url")
-            if url:
-                return url
-    return None
+system = f"You are a helpful Agent Assistant. Here are tools that you can invoke: {"".join(tools)}"
 
 
 async def process_tools(
-    tool_list: List[ToolCallBlock],
+    tool_list: List[Coroutine],
     timeout: float = 60.0
-) -> List[MessageBlock]:
-    
-    message = []
-    
-    for tool in tool_list:
-        
-        result = []
+) -> List:
+    result = []
 
-        tool_function = tool.function.name
-        if tool_function:
+    for coro in tool_list:
+        try:
+            # Get function name for better error reporting
+            func_name = getattr(coro, '__qualname__', str(coro))
+            
+            # Handle the case where the coroutine might be malformed
+            if not asyncio.iscoroutine(coro):
+                error_info = {
+                    'status': 'error',
+                    'function': func_name,
+                    'error': 'Invalid coroutine object',
+                    'error_type': 'TypeError'
+                }
+                result.append(error_info)
+                cprint(f"✗ Invalid coroutine: {func_name}", color="red")
+                continue
+
+            # Attempt to execute the coroutine with timeout
             try:
-                result.append(await globals()[tool_function](**tool.function.arguments))
-                is_error = False
+                tool_result = await asyncio.wait_for(coro, timeout=timeout)
+                result.append({
+                    'status': 'success',
+                    'function': func_name,
+                    'result': tool_result
+                })
+                cprint(f"✓ Successfully executed: {func_name}", color="green")
+                
+            except asyncio.TimeoutError:
+                error_info = {
+                    'status': 'error',
+                    'function': func_name,
+                    'error': f'Function timed out after {timeout} seconds',
+                    'error_type': 'TimeoutError'
+                }
+                result.append(error_info)
+                cprint(f"⚠ Timeout: {func_name}", color="yellow")
+                
+            except TypeError as e:
+                error_info = {
+                    'status': 'error',
+                    'function': func_name,
+                    'error': f'Invalid arguments: {str(e)}',
+                    'error_type': 'TypeError'
+                }
+                result.append(error_info)
+                cprint(f"✗ Argument Error in {func_name}: {str(e)}", color="red")
+                
             except Exception as e:
-                result = str(e)
-                is_error = True
-        else:
-            result = f"Tool {tool.function.name} not found"
-            is_error = True
+                error_info = {
+                    'status': 'error',
+                    'function': func_name,
+                    'error': str(e),
+                    'error_type': type(e).__name__,
+                    'traceback': traceback.format_exc()
+                }
+                result.append(error_info)
+                cprint(f"✗ Error in {func_name}: {str(e)}", color="red")
+                
+        except Exception as e:
+            # Catch-all for any unexpected errors in error handling itself
+            result.append({
+                'status': 'error',
+                'function': 'unknown',
+                'error': f'Unexpected error: {str(e)}',
+                'error_type': type(e).__name__,
+                'traceback': traceback.format_exc()
+            })
+            cprint(f"✗ Unexpected error processing tool: {str(e)}", color="red")
 
-        message.append(
-            ToolResultBlock(
-                type="tool_result",
-                content="".join(result),
-                tool_use_id=tool.id,
-            )
-        )
-
-    return message
+    return result
 
 
 async def main():
     client = LLMClient(
         region_name="us-east-1",
-        model_name=ModelName.JAMBA_1_5_LARGE,
+        model_name=ModelName.JAMBA_1_5_MINI,
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
     
+    chat_history = []
+    
+    user_input = "Send email to my boss on wishing him an happy birthday. My boss email is duy.doan@techxcorp.com, My name is Phicks."
     
     while True:
-        
-        user_input = await get_user_input("Enter a prompt: ")
         
         # Add user message to chat history
         chat_history.append(MessageBlock(
@@ -256,31 +170,25 @@ async def main():
             content=user_input
         ).model_dump())
 
+        while True:
+            
+            print(json.dumps(chat_history, indent=2))
         
-        async for chunk, stop_reason in client.generate(
-                prompt=chat_history,
-                system=system,
-                config=model_config
-            ):
-                if stop_reason is None:
-                    cprint(chunk, color="green", end="", flush=True)
-                else:
-                    # Always show the stop reason
-                    cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
-                    
-                    if isinstance(chunk, MessageBlock):
-                        # Handle tool calls if present
-                        if chunk.tool_calls:
-                            cprint(f"Tool calls detected: {chunk.tool_calls}", color="cyan", flush=True)
-                            chat_history.append(chunk.model_dump())
-                            results = await process_tools(chunk.tool_calls)
-                            for result in results:
-                                chat_history.append(result.model_dump())
-                            break
-                        else:
-                            # For regular responses, add to chat history
-                            chat_history.append(chunk.model_dump())
-                            break
+            async for chunk, stop_reason in client.generate(
+                    prompt=chat_history,
+                    system=system,
+                    config=model_config
+                ):
+                    if stop_reason is None:
+                        cprint(chunk, color="green", end="", flush=True)
+                    else:
+                        # Always show the stop reason
+                        cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
+                        
+            if stop_reason == "stop":
+                break
+            
+        user_input = await get_user_input("\nEnter your next request or /bye to exit: ")
         
         if user_input.lower() == "/bye":
             break
