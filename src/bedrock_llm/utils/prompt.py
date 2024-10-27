@@ -1,5 +1,5 @@
 from typing import Optional, List
-from src.bedrock_llm.schema.tools import LlamaToolMetadata
+from src.bedrock_llm.schema.tools import ToolMetadata
 
 
 def llama_format(user_messages, system: Optional[str]=None):
@@ -16,7 +16,7 @@ def llama_format(user_messages, system: Optional[str]=None):
 """
 
 
-def llama_tool_format(tool_metadata_list: List[LlamaToolMetadata]) -> str:
+def llama_tool_format(tool_metadata_list: List[ToolMetadata]) -> str:
     tool_instruction_prompt="""You are a helpful assistant with tool calling capabilities. You are given a question and a set of possible functions. 
     Based on the question, you will need to one or many function/tool calls to achieve the purpose. 
     If you can answer the question without any function/tools calls, please do so.

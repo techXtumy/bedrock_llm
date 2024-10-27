@@ -193,13 +193,13 @@ class ToolCallBlock(BaseModel):
 
     Attributes:
         id (str): The ID of the tool call.
-        type (Literal["tool_call"]): The type of block, must be "tool_call". This param is only valid for **Jamba Model (AI21)**
+        type (str): This param is only valid for **Jamba Model (AI21)**
         function (Dict[str | Any]): The function call to make.
 
     Example:
         >>> tool_call_block = ToolCallBlock(
         ...     id="tool_call_id",
-        ...     type="tool_call",
+        ...     type="function",
         ...     function={"name": "tool_name", "arguments": {"key": "value"}}
         ... )
     """

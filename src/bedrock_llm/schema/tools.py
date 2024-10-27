@@ -53,7 +53,7 @@ class InputSchema(BaseModel):
     required: List[str]
    
     
-class ClaudeToolMetadata(BaseModel):
+class ToolMetadata(BaseModel):
     """
     Metadata for a Claude tool.
 
@@ -105,37 +105,3 @@ class ClaudeToolMetadata(BaseModel):
         kwargs.setdefault('exclude_none', True)
         kwargs.setdefault('exclude_unset', True)
         return super().model_dump(**kwargs)
-
-
-class LlamaToolMetadata(BaseModel):
-    """
-    Metadata for a Llama tool.
-
-    Attributes:
-        name (str): The name of the tool.
-        description (str): The description of the tool.
-        parameters (InputSchema): The parameters for the tool.
-
-    Example:
-        >>> tool_metadata = LlamaToolMetadata(
-        ...     function="PersonInfo",
-        ...     description="Get information about a person",
-        ...     parameters=LlamaInputSchema(
-        ...         type="object",
-        ...         required=["name"],
-        ...         properties={
-        ...             "name": PropertyAttr(type="string", description="The name of the person"),
-        ...             "age": PropertyAttr(type="integer", description="The age of the person")
-        ...         }
-        ...     )
-        ... )
-        
-    Read more: https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/text_prompt_format.md
-    """
-    name: str
-    description: str
-    parameters: InputSchema
- 
-
-
-    

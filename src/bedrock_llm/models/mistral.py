@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, Optional, List, Dict
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
 from src.bedrock_llm.schema.message import MessageBlock
-from src.bedrock_llm.types.aliases import ToolChoiceEnum
+from src.bedrock_llm.types.enums import ToolChoiceEnum
 
 
 class MistralChatImplementation(BaseModelImplementation):
