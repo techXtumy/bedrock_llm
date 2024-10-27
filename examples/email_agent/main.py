@@ -101,7 +101,7 @@ async def send_email(
     body: str
 ):
     kwargs = {
-        "recipientEmail": to,
+        "recipientEmail": email,
         "subject": subject,
         "body": body
     }
