@@ -109,7 +109,7 @@ class LLMClient:
                     accept="application/json",
                     contentType="application/json",
                     body=json.dumps(request_body),
-                    trace="ENABLED"
+                    # trace="ENABLED"
                 )
                 
                 # Parse and yield the response

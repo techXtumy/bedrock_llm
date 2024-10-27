@@ -4,13 +4,17 @@ import os
 import pytz
 import json
 import boto3
+import dotenv
+
+from botocore.exceptions import ClientError
+from aiobotocore.session import get_session
 
 from termcolor import cprint
 from datetime import datetime
 import xml.etree.ElementTree as ET
 
 # Add the parent directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from src.bedrock_llm.client import LLMClient
 from src.bedrock_llm.types.enums import ModelName
@@ -26,6 +30,8 @@ Watch this video for connecting to Outlook
 https://www.youtube.com/watch?v=7Cve_k4C_Ts
 """
 
+dotenv.load_dotenv()
+
 model_config = ModelConfig(
     temperature=0.6,
     max_tokens=2048,
@@ -35,7 +41,14 @@ retry_config = RetryConfig(
     max_retries=3,
     retry_delay=0.5
 )
-runtime = boto3.client("bedrock-agent-runtime", region_name="us-east-1")
+runtime = boto3.client(
+    "bedrock-agent-runtime", 
+    region_name=os.environ.get("BEDROCK_REGION")
+)
+ses_client = boto3.client(
+    'ses',
+    region_name=os.environ.get("SES_REGION")
+)
 
 chat_history = []
 tool_metadata_list = [
@@ -82,7 +95,10 @@ tool_metadata_list = [
             }
         }
     ]
-system = f"""You are a helpful assistant. This is the real time data {datetime.now(tz = pytz.timezone("Asia/Bangkok")).strftime('%Y-%m-%d %H:%M:%S %Z')}
+system = f"""You are a helpful assistant. This is the real time data {datetime.now(tz = pytz.timezone("Asia/Bangkok")).strftime('%Y-%m-%d %H:%M:%S %Z')}.
+My name is Phicks, my working email is an.tq@techxcorp.com.
+My boss name is Duy, my boss email is mineran2003@gmailcom.
+I am working as Data Scientist at TechX Corporation.
 
 Here is a list of functions in JSON format that you can invoke.
 Please call the model follow by your own instruction that you have trained on.
@@ -96,18 +112,37 @@ async def get_user_input(
 
 
 async def send_email(
-    email: str,
+    sender_email: str,
+    recipient_email: str,
     subject: str,
-    body: str
+    body_text: str,
 ):
-    kwargs = {
-        "recipientEmail": email,
-        "subject": subject,
-        "body": body
-    }
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, lambda: runtime.send_email(**kwargs))
-    return result
+    session = get_session()
+    async with session.create_client('ses', os.environ.get("SES_REGION")) as ses_client:
+        try:
+            response = await ses_client.send_email(
+                Source=sender_email,
+                Destination={
+                    'ToAddresses': [recipient_email]
+                },
+                Message={
+                    'Subject': {
+                        'Data': subject
+                    },
+                    'Body': {
+                        'Text': {
+                            'Data': body_text
+                        }
+                    }
+                }
+            )
+            
+            if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                return ("Email sent successfully!")
+            else:
+                return (f"Failed to send email. Error: {response}")
+        except ClientError as e:
+            return ("Sending Email error:", e.response['Error']['Message'])
 
 
 async def retrieve_information(query: str):
@@ -174,20 +209,16 @@ async def process_tools(
     timeout: float = 60.0
 ) -> List[MessageBlock]:
     
+    message = []
+    
     for tool in tool_list:
         
-        message = MessageBlock(
-            role="tool", 
-            content="", 
-            tool_calls_id=""
-        )
-        
-        result = ""
+        result = []
 
         tool_function = tool.function.name
         if tool_function:
             try:
-                result += await globals()[tool_function](**tool.function.arguments)
+                result.append(await globals()[tool_function](**tool.function.arguments))
                 is_error = False
             except Exception as e:
                 result = str(e)
@@ -196,12 +227,11 @@ async def process_tools(
             result = f"Tool {tool.function.name} not found"
             is_error = True
 
-        message.content.append(
+        message.append(
             ToolResultBlock(
                 type="tool_result",
+                content="".join(result),
                 tool_use_id=tool.id,
-                is_error=is_error,
-                content=result
             )
         )
 
@@ -216,7 +246,6 @@ async def main():
     )
     
     
-    
     while True:
         
         user_input = await get_user_input("Enter a prompt: ")
@@ -227,10 +256,6 @@ async def main():
             content=user_input
         ).model_dump())
 
-    
-        # For debugging
-        print("\nCurrent Chat History:")
-        print(json.dumps(chat_history, indent=2))
         
         async for chunk, stop_reason in client.generate(
                 prompt=chat_history,
@@ -248,6 +273,9 @@ async def main():
                         if chunk.tool_calls:
                             cprint(f"Tool calls detected: {chunk.tool_calls}", color="cyan", flush=True)
                             chat_history.append(chunk.model_dump())
+                            results = await process_tools(chunk.tool_calls)
+                            for result in results:
+                                chat_history.append(result.model_dump())
                             break
                         else:
                             # For regular responses, add to chat history
