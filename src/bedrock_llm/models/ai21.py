@@ -91,48 +91,6 @@ class JambaImplementation(BaseModelImplementation):
         )
 
 
-    @staticmethod
-    def _process_tool_calls(tool_calls_json: str) -> List[str]:
-        """Process and transform tool calls JSON to the required format."""
-        try:
-            # Step 1: Check if it uses single quotes instead of double quotes
-            if "'" in tool_calls_json and '"' not in tool_calls_json:
-                # Replace single quotes with double quotes
-                cleaned_data = tool_calls_json.replace("'", '"')
-            else:
-                cleaned_data = tool_calls_json.strip()
-
-            # Step 2: Remove any extraneous whitespace
-            cleaned_data = re.sub(r'\s+', ' ', cleaned_data)
-
-            # Step 3: Attempt to parse with json.loads()
-            tool_calls_data = json.loads(cleaned_data)
-
-            # Ensure it's a list, as expected
-            if not isinstance(tool_calls_data, list):
-                print("Expected a list, but got:", type(tool_calls_data))
-                return []
-
-            result = []
-            for tool_call in tool_calls_data:
-                call_id = tool_call.get("id")
-                function_name = tool_call.get("function", {}).get("name")
-                arguments = tool_call.get("function", {}).get("arguments", {})
-
-                # Construct the function call string with arguments
-                args_str = ', '.join([f'{key}="{value}"' for key, value in arguments.items()])
-                function_call = f'{function_name}({args_str})'
-
-                # Append to result in the desired format
-                result.append([call_id, function_call])
-
-            return result
-
-        except json.JSONDecodeError:
-            print(f"Error decoding tool calls {tool_calls_json}")
-            return []
-
-
     async def parse_response(
         self,
         stream: Any
@@ -157,10 +115,18 @@ class JambaImplementation(BaseModelImplementation):
                 text_chunk, stop_reason = self._extract_chunk_data(chunk)
                 
                 if stop_reason:
-                    yield "".join(full_answer), stop_reason
-
+                    yield MessageBlock(
+                            role="assistant",
+                            content="".join(full_answer).strip()
+                        ), stop_reason
+                    break
+                
                 if not text_chunk:
+                    continue
+
+                if not stop_reason:
                     yield text_chunk, None
+                    full_answer.append(text_chunk)
                     
             except Exception as e:
                 print(f"Unexpected error processing chunk: {str(e)}")

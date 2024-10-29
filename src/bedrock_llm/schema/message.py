@@ -179,7 +179,7 @@ class ToolResultBlock(BaseModel):
     type: Literal["tool_result"]
     tool_use_id: str
     is_error: bool
-    content: str
+    content: TextBlock | ImageBlock | str
     
     def model_dump(self, **kwargs):
         kwargs.setdefault('exclude_none', True)

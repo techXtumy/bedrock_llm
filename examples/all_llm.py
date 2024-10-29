@@ -23,9 +23,10 @@ async def main():
     mistral_prompt = mistral_format(prompt, system)
     titan_prompt = titan_format(prompt, system)
     config = ModelConfig(
-        temperature=0.9,
+        temperature=0,
         max_tokens=512,
-        top_p=0.9
+        top_p=1,
+        top_k=70
     )
     retry_config = RetryConfig(
         max_retries=3,
@@ -49,10 +50,10 @@ async def main():
             prompt=llama_prompt,
             config=config
         ):
-            cprint(message, color="yellow", end="", flush=True)
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
+            cprint(message, color="yellow", end="", flush=True)
     
     
     # Using Titan model
@@ -71,10 +72,10 @@ async def main():
             prompt=titan_prompt,
             config=config
         ):
-            cprint(message, color="cyan", end="", flush=True)
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
+            cprint(message, color="cyan", end="", flush=True)
     
     
     # Using Claude model
@@ -101,7 +102,7 @@ async def main():
         
         
     # Using Jamba model
-    for model in [ModelName.JAMBA_1_5_MINI]:
+    for model in [ModelName.JAMBA_1_5_MINI, ModelName.JAMBA_1_5_LARGE]:
         jamba_client = LLMClient(
             region_name="us-east-1",
             model_name=model,
@@ -112,10 +113,11 @@ async def main():
             prompt=prompt,
             config=config
         ):
-            cprint(message, color="grey", end="", flush=True)
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
+            if message is not None:
+                cprint(message, color="grey", end="", flush=True)
         
         
     # Using Mistral 7B Instruct model
@@ -129,10 +131,10 @@ async def main():
         prompt=mistral_prompt,
         config=config
     ):
-        cprint(message, color="magenta", end="", flush=True)
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
+        cprint(message, color="magenta", end="", flush=True)
         
         
     # Using Mistral Large V2 model
@@ -147,10 +149,10 @@ async def main():
         config=config,
         system=system
     ):
-        cprint(message, color="blue", end="", flush=True)
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
+        cprint(message, color="blue", end="", flush=True)
     
     
 if __name__ == "__main__":
