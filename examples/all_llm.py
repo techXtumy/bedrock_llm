@@ -46,14 +46,14 @@ async def main():
             retry_config=retry_config
         )
         print("Model: ", model)
-        async for message, stop_reason in llama_client.generate(
+        async for token, stop_reason, message in llama_client.generate_async(
             prompt=llama_prompt,
             config=config
         ):
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
-            cprint(message, color="yellow", end="", flush=True)
+            cprint(token, color="yellow", end="", flush=True)
     
     
     # Using Titan model
@@ -68,40 +68,41 @@ async def main():
             retry_config=retry_config
         )
         print("Model: ", model)
-        async for message, stop_reason in titan_client.generate(
+        async for token, stop_reason, message in titan_client.generate_async(
             prompt=titan_prompt,
             config=config
         ):
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
-            cprint(message, color="cyan", end="", flush=True)
+            cprint(token, color="cyan", end="", flush=True)
     
     
     # Using Claude model
     for model in [
+        ModelName.CLAUDE_3_HAIKU,
         ModelName.CLAUDE_3_5_HAIKU, 
         ModelName.CLAUDE_3_5_SONNET
     ]:
         claude_client = LLMClient(
-            region_name="us-west-2",
+            region_name="us-east-1",
             model_name=model,
             retry_config=retry_config
         )
         print("Model: ", model)
-        async for message, stop_reason in claude_client.generate(
+        async for token, stop_reason, message in claude_client.generate_async(
             prompt=prompt,
             config=config,
             system=system
         ):
-            if isinstance(message, str):
-                cprint(message, color="green", end="", flush=True)
+            if token:
+                cprint(token, color="green", end="", flush=True)
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
         
         
-    # Using Jamba model
+    # # Using Jamba model
     for model in [ModelName.JAMBA_1_5_MINI, ModelName.JAMBA_1_5_LARGE]:
         jamba_client = LLMClient(
             region_name="us-east-1",
@@ -109,15 +110,15 @@ async def main():
             retry_config=retry_config
         )
         print("Model: ", model)
-        async for message, stop_reason in jamba_client.generate(
+        async for token, stop_reason, message in jamba_client.generate_async(
             prompt=prompt,
             config=config
         ):
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
                 break
-            if message is not None:
-                cprint(message, color="grey", end="", flush=True)
+            if token:
+                cprint(token, color="grey", end="", flush=True)
         
         
     # Using Mistral 7B Instruct model
@@ -127,14 +128,14 @@ async def main():
         retry_config=retry_config
     )
     print("Model: ", ModelName.MISTRAL_7B)
-    async for message, stop_reason in mistral_client.generate(
+    async for token, stop_reason, message in mistral_client.generate_async(
         prompt=mistral_prompt,
         config=config
     ):
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
-        cprint(message, color="magenta", end="", flush=True)
+        cprint(token, color="magenta", end="", flush=True)
         
         
     # Using Mistral Large V2 model
@@ -144,7 +145,7 @@ async def main():
         retry_config=retry_config
     )
     print("Model: ", ModelName.MISTRAL_LARGE_2)
-    async for message, stop_reason in mistral_client.generate(
+    async for token, stop_reason, message in mistral_client.generate_async(
         prompt=prompt,
         config=config,
         system=system
@@ -152,7 +153,7 @@ async def main():
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
-        cprint(message, color="blue", end="", flush=True)
+        cprint(token, color="blue", end="", flush=True)
     
     
 if __name__ == "__main__":

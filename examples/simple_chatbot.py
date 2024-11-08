@@ -44,11 +44,11 @@ async def chat_with_titan():
         chat_history.append(f"User: {input_prompt}\nBot: ")
 
         # Simple text generation
-        async for chunk, stop_reason in client.generate(
+        async for token, stop_reason, response in client.generate_async(
             prompt="".join(chat_history)
         ):
             if stop_reason is None:
-                cprint(chunk, color="green", end="", flush=True)
+                cprint(token, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
 
@@ -88,16 +88,16 @@ async def chat_with_claude():
         )
         
         # Simple text generation
-        async for chunk, stop_reason in client.generate(
+        async for token, stop_reason, response in client.generate_async(
             prompt=chat_history
         ):
             if stop_reason is None:
-                cprint(chunk, color="green", end="", flush=True)
+                cprint(token, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
         
         # Save response to chat history
-        chat_history.append(chunk.model_dump())
+        chat_history.append(response.model_dump())
         
         # Check for bye bye
         if input_prompt.lower() == "/bye":
@@ -216,11 +216,11 @@ if __name__ == "__main__":
     model_selection = input("Select model (1 for Claude, 2 for Titan, 3 for Llama, 4 for Mistral and 5 for Jamba): ")
     if model_selection == "1":
         asyncio.run(chat_with_claude())
-    elif model_selection == "2":
-        asyncio.run(chat_with_titan())
-    elif model_selection == "3":
-        asyncio.run(chat_with_llama())
-    elif model_selection == "4":
-        asyncio.run(chat_with_mistral())
-    elif model_selection == "5":
-        asyncio.run(chat_with_jamba())
+    # elif model_selection == "2":
+    #     asyncio.run(chat_with_titan())
+    # elif model_selection == "3":
+    #     asyncio.run(chat_with_llama())
+    # elif model_selection == "4":
+    #     asyncio.run(chat_with_mistral())
+    # elif model_selection == "5":
+    #     asyncio.run(chat_with_jamba())

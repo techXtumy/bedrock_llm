@@ -3,6 +3,8 @@ import json
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Literal
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
+from src.bedrock_llm.schema.message import MessageBlock
+from src.bedrock_llm.types.enums import StopReason
 
 
 class TitanImplementation(BaseModelImplementation):
@@ -27,24 +29,23 @@ class TitanImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[Tuple[str, Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None], None]:
-        """
-        Parse the response from the model into a stream of tokens.
-
-        Args:
-            stream (Any): The response from the model.
-
-        Yields:
-            Tuple[str, Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None]: 
-            A tuple containing:
-            - str: The token from the model.
-            - Literal["FINISH", "LENGTH", "STOP", "ERROR"] | None: The completion reason, if any.
-        """
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
         full_response = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            yield chunk["outputText"], None
+            yield chunk["outputText"], None, None
             full_response.append(chunk["outputText"])
             if chunk["completionReason"]:
-                yield "".join(full_response), chunk["completionReason"]
-        return
+                message = MessageBlock(
+                    role="assistant",
+                    content="".join(full_response)
+                )
+                if chunk["completionReason"] == "FINISH":
+                    yield None, StopReason.END_TURN, message
+                elif chunk["completionReason"] == "LENGTH":
+                    yield None, StopReason.MAX_TOKENS, message
+                elif chunk["completionReason"] == "STOP":
+                    yield None, StopReason.STOP_SEQUENCE, message
+                else:
+                    yield None, StopReason.ERROR, message
+                return

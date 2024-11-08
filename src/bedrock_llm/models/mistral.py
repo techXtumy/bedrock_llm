@@ -1,10 +1,10 @@
 import json
 
-from typing import Any, AsyncGenerator, Optional, List, Dict
+from typing import Any, AsyncGenerator, Optional, List, Dict, Tuple
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
 from src.bedrock_llm.schema.message import MessageBlock
-from src.bedrock_llm.types.enums import ToolChoiceEnum
+from src.bedrock_llm.types.enums import ToolChoiceEnum, StopReason
 
 
 class MistralChatImplementation(BaseModelImplementation):
@@ -58,11 +58,28 @@ class MistralChatImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
+        full_response = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["choices"][0]
-            yield chunk["message"]["content"], chunk["stop_reason"]
+            if chunk["stop_reason"]:    
+                message = MessageBlock(
+                    role="assistant",
+                    content="".join(full_response)
+                )
+                if chunk["stop_reason"] == "stop":
+                    yield None, StopReason.END_TURN, message
+                elif chunk["stop_reason"] == "tool_calls":
+                    yield None, StopReason.TOOL_USE, message
+                elif chunk["stop_reason"] == "length":
+                    yield None, StopReason.MAX_TOKENS, message
+                else:
+                    yield None, StopReason.ERROR, message
+                return
+            else:
+                yield chunk["message"]["content"], None, None
+                full_response.append(chunk["message"]["content"])
             
 
 class MistralInstructImplementation(BaseModelImplementation):
@@ -87,13 +104,25 @@ class MistralInstructImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
         full_response = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            txt_chunk = chunk["outputs"][0]
-            yield txt_chunk["text"], None
-            full_response.append(txt_chunk["text"])
-            if txt_chunk["stop_reason"]:
-                yield "".join(full_response), txt_chunk["stop_reason"]
-        return
+            chunk = chunk["outputs"][0]
+            if chunk["stop_reason"]:
+                message = MessageBlock(
+                    role="assistant",
+                    content="".join(full_response)
+                )
+                if chunk["stop_reason"] == "stop":
+                    yield None, StopReason.END_TURN, message
+                elif chunk["stop_reason"] == "tool_calls":
+                    yield None, StopReason.TOOL_USE, message
+                elif chunk["stop_reason"] == "length":
+                    yield None, StopReason.MAX_TOKENS, message
+                else:
+                    yield None, StopReason.ERROR, message
+                return
+            else:
+                yield chunk["text"], None, None
+                full_response.append(chunk["text"])

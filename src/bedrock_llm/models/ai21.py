@@ -6,6 +6,7 @@ from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
 from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock, ToolCallBlock
+from src.bedrock_llm.types.enums import StopReason
 
 
 class JambaImplementation(BaseModelImplementation):
@@ -94,7 +95,7 @@ class JambaImplementation(BaseModelImplementation):
     async def parse_response(
         self,
         stream: Any
-    ) -> AsyncGenerator[Tuple[str | MessageBlock, Optional[str]], None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
         """
         Parse the response from the Bedrock API, handling both text content
         and tool call requests.
@@ -110,22 +111,24 @@ class JambaImplementation(BaseModelImplementation):
         full_answer = []
 
         for event in stream:
+            # yield event, None
             try:
                 chunk = json.loads(event["chunk"]["bytes"])
                 text_chunk, stop_reason = self._extract_chunk_data(chunk)
                 
                 if stop_reason:
-                    yield MessageBlock(
-                            role="assistant",
-                            content="".join(full_answer).strip()
-                        ), stop_reason
+                    message = MessageBlock(role="assistant", content="".join(full_answer).strip())
+                    if stop_reason == "stop":
+                        yield None, StopReason.END_TURN, message
+                    elif stop_reason == "length":
+                        yield None, StopReason.MAX_TOKENS, message
                     break
                 
                 if not text_chunk:
                     continue
 
                 if not stop_reason:
-                    yield text_chunk, None
+                    yield text_chunk, None, None
                     full_answer.append(text_chunk)
                     
             except Exception as e:

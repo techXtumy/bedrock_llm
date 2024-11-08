@@ -4,6 +4,7 @@ from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
 from src.bedrock_llm.schema.message import MessageBlock, TextBlock, ToolUseBlock
+from src.bedrock_llm.types.enums import StopReason
 
 
 class ClaudeImplementation(BaseModelImplementation):
@@ -53,7 +54,7 @@ class ClaudeImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[Tuple[str | MessageBlock, Optional[str]], None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
         full_response = ""
         tool_input = ""
         message = MessageBlock(role="assistant", content=[])
@@ -65,7 +66,7 @@ class ClaudeImplementation(BaseModelImplementation):
             if chunk['type'] == 'content_block_delta':
                 if chunk['delta']['type'] == 'text_delta':
                     text_chunk = chunk['delta']['text']
-                    yield text_chunk, None
+                    yield text_chunk, None, None
                     full_response += text_chunk     
                 elif chunk['delta']['type'] == 'input_json_delta':
                     text_chunk = chunk['delta']['partial_json']
@@ -101,5 +102,14 @@ class ClaudeImplementation(BaseModelImplementation):
             elif chunk['type'] == 'message_delta':
                 stop_reason = chunk['delta']['stop_reason']
                 if stop_reason:
-                    yield message, stop_reason
+                    if stop_reason == "end_turn":
+                        yield None, StopReason.END_TURN, message
+                    elif stop_reason == "stop_sequence":
+                        yield None, StopReason.STOP_SEQUENCE, message
+                    elif stop_reason == "max_tokens":
+                        yield None, StopReason.MAX_TOKENS, message
+                    elif stop_reason == "tool_use":
+                        yield None, StopReason.TOOL_USE, message
+                    else:
+                        yield None, StopReason.ERROR, message
                     return

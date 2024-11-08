@@ -2,7 +2,7 @@ import json
 import boto3
 import asyncio
 
-from src.bedrock_llm.types.enums import ModelName
+from src.bedrock_llm.types.enums import ModelName, StopReason
 from src.bedrock_llm.config.base import RetryConfig
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.schema.message import MessageBlock
@@ -13,6 +13,7 @@ from src.bedrock_llm.models.amazon import TitanImplementation
 from src.bedrock_llm.models.ai21 import JambaImplementation
 from src.bedrock_llm.models.mistral import MistralInstructImplementation
 from src.bedrock_llm.models.mistral import MistralChatImplementation
+from src.bedrock_llm.schema.message import MessageBlock
 from botocore.config import Config
 from botocore.exceptions import ClientError, ReadTimeoutError
 
@@ -60,6 +61,7 @@ class LLMClient:
         Get the appropriate model implementation based on the model name.
         """
         implementations = {
+            ModelName.CLAUDE_3_HAIKU: ClaudeImplementation(),
             ModelName.CLAUDE_3_5_HAIKU: ClaudeImplementation(),
             ModelName.CLAUDE_3_5_SONNET: ClaudeImplementation(),
             ModelName.CLAUDE_3_5_OPUS: ClaudeImplementation(),
@@ -78,22 +80,37 @@ class LLMClient:
         return implementations[self.model_name]
     
     
-    async def generate(
+    async def generate_async(
         self,
         prompt: str | List[MessageBlock] | Dict[str, Any],
         config: Optional[ModelConfig] = None,
         **kwargs: Any
-    ) -> AsyncGenerator[Tuple[str | MessageBlock, Optional[str]], None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason |  None, MessageBlock | None], None]:
         """
-        Generate a response from the model.
+        Generate a stream response from the model.
         
         Args:
             prompt: Either a string prompt or message block a dictionary containing the full request structure.
             config: Optional configuration for the request.
             kwargs: Additional optional arguments required by certain models.
             
-        Yields:
-            Tuple containing either (text_chunk, None) or (message_block, stop_reason).
+        Returns:
+            An async generator that yields tokens, stop reason, and response block.
+        
+        Each yield is a tuple containing:
+            - Token: The next token in the response stream.
+            - Stop Reason: The reason for stopping the response stream.
+            - Response Block: The full response block if the response is complete.
+
+        Raises:
+            Exception: If the model fails to generate a response after the maximum number of retries.
+        
+        Example:
+            >>> async for token, stop_reason, response in client.generate_async(prompt, config):
+            ...     print(token, end="", flush=True)
+            ...     if stop_reason:
+            ...         history.append(response.model_dump())
+            ...         break
         """
         config = config or ModelConfig()
         
@@ -113,8 +130,8 @@ class LLMClient:
                 )
                 
                 # Parse and yield the response
-                async for chunk, stop_reason in self.model_implementation.parse_response(response['body']):
-                    yield chunk, stop_reason
+                async for token, stop_reason, response in self.model_implementation.parse_response(response['body']):
+                    yield token, stop_reason, response
                     
                 break  # Success, exit retry loop
                 

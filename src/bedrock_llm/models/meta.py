@@ -3,6 +3,7 @@ import json
 from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
+from src.bedrock_llm.models.base import StopReason, MessageBlock
 
 
 class LlamaImplementation(BaseModelImplementation):
@@ -24,13 +25,21 @@ class LlamaImplementation(BaseModelImplementation):
     async def parse_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
         full_answer = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
-            if chunk.get("stop_reason") is not None:
-                yield "".join(full_answer), chunk.get("stop_reason")
-            else:
-                yield chunk["generation"], None
-                full_answer.append(chunk["generation"])
-        return
+            yield chunk["generation"], None, None
+            full_answer.append(chunk["generation"])
+            if chunk.get("stop_reason"):
+                message = MessageBlock(
+                    role="assistant",
+                    content="".join(full_answer)
+                )
+                if chunk["stop_reason"] == "stop":
+                    yield None, StopReason.END_TURN, message
+                elif chunk["stop_reason"] == "length":
+                    yield None, StopReason.MAX_TOKENS, message
+                else:
+                    yield None, StopReason.ERROR, message
+                return

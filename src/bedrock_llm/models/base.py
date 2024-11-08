@@ -3,6 +3,7 @@ from typing import Any, AsyncGenerator, Dict, Optional, Tuple, List
 
 from src.bedrock_llm.schema.message import MessageBlock
 from src.bedrock_llm.config.model import ModelConfig
+from src.bedrock_llm.types.enums import StopReason
 
 
 class BaseModelImplementation(ABC):
@@ -19,5 +20,5 @@ class BaseModelImplementation(ABC):
     async def parse_response(
         self, 
         response: Any
-    ) -> AsyncGenerator[Tuple[str | MessageBlock, Optional[str]], None]:
+    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
         pass

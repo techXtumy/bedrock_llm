@@ -2,9 +2,13 @@ from enum import Enum
 
 
 class ModelName(str, Enum):
-    CLAUDE_3_5_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0"
-    CLAUDE_3_5_SONNET = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0"
+    CLAUDE_3_5_HAIKU = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+    CLAUDE_3_5_SONNET = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
     CLAUDE_3_5_OPUS = "anthropic.claude-3-opus-20240229-v1:0"
+    # LLAMA_3_1_8B = "us.meta.llama3-1-8b-instruct-v1:0"
+    # LLAMA_3_1_70B = "us.meta.llama3-1-70b-instruct-v1:0"
+    # LLAMA_3_1_405B = "meta.llama3-1-405b-instruct-v1:0"
     LLAMA_3_2_1B = "us.meta.llama3-2-1b-instruct-v1:0"
     LLAMA_3_2_3B = "us.meta.llama3-2-3b-instruct-v1:0"
     LLAMA_3_2_11B = "us.meta.llama3-2-11b-instruct-v1:0"
@@ -28,3 +32,11 @@ class DescriptionFormat(Enum):
     NORMAL = "1"
     CLAUDE = "2"
     REACT = "3"
+    
+
+class StopReason(Enum):
+    END_TURN = 1
+    MAX_TOKENS = 2
+    STOP_SEQUENCE = 3
+    TOOL_USE = 4
+    ERROR = 5
