@@ -8,7 +8,7 @@ from src.bedrock_llm.models.base import StopReason, MessageBlock
 
 class LlamaImplementation(BaseModelImplementation):
     
-    async def prepare_request(
+    def prepare_request(
         self, 
         prompt: str | List[Dict], 
         config: ModelConfig,
@@ -19,10 +19,38 @@ class LlamaImplementation(BaseModelImplementation):
             "max_gen_len": config.max_tokens,
             "temperature": config.temperature,
             "top_p": config.top_p
-        }
+        } 
     
+    async def prepare_request_async(
+        self, 
+        prompt: str | List[Dict], 
+        config: ModelConfig,
+        **kwargs
+    ) -> Dict[str, Any]:
+        return {
+            "prompt": prompt,
+            "max_gen_len": config.max_tokens,
+            "temperature": config.temperature,
+            "top_p": config.top_p
+        } 
+        
+    def parse_response(
+        self, 
+        response: Any
+    ) -> Tuple[MessageBlock, StopReason]:
+        chunk = json.loads(response.read())
+        message = MessageBlock(
+            role="assistant",
+            content=chunk["generation"]
+        )
+        if chunk["stop_reason"] == "stop":
+            return message, StopReason.END_TURN
+        elif chunk["stop_reason"] == "length":
+            return message, StopReason.MAX_TOKENS
+        else:
+            return message, StopReason.ERROR
     
-    async def parse_response(
+    async def parse_stream_response(
         self, 
         stream: Any
     ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:

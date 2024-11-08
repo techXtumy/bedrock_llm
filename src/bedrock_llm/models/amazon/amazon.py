@@ -9,7 +9,7 @@ from src.bedrock_llm.types.enums import StopReason
 
 class TitanImplementation(BaseModelImplementation):
     
-    async def prepare_request(
+    def prepare_request(
         self, 
         prompt: str | List[Dict],
         config: ModelConfig,
@@ -25,8 +25,41 @@ class TitanImplementation(BaseModelImplementation):
             }
         }
     
+    async def prepare_request_async(
+        self, 
+        prompt: str | List[Dict],
+        config: ModelConfig,
+        **kwargs
+    ) -> Dict[str, Any]:
+        return {
+            "inputText": prompt,
+            "textGenerationConfig": {
+                "maxTokenCount": config.max_tokens,
+                "temperature": config.temperature,
+                "topP": config.top_p,
+                "stopSequences": config.stop_sequences
+            }
+        }
+        
+    def parse_response(
+        self, 
+        response: Any
+    ) -> Tuple[MessageBlock, StopReason]:
+        chunk = json.loads(response.read())
+        message = MessageBlock(
+            role="assistant",
+            content=chunk["results"][0]["outputText"]
+        )
+        if chunk["results"][0]["completionReason"] == "FINISH":
+            return message, StopReason.END_TURN
+        elif chunk["results"][0]["completionReason"] == "LENGTH":
+            return message, StopReason.MAX_TOKENS
+        elif chunk["results"][0]["completionReason"] == "STOP":
+            return message, StopReason.STOP_SEQUENCE
+        else:
+            return message, StopReason.ERROR
     
-    async def parse_response(
+    async def parse_stream_response(
         self, 
         stream: Any
     ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:

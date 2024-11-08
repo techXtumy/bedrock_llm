@@ -8,7 +8,16 @@ from src.bedrock_llm.types.enums import StopReason
 
 class BaseModelImplementation(ABC):
     @abstractmethod
-    async def prepare_request(
+    def prepare_request(
+        self, 
+        prompt: str | List[Dict],
+        config: ModelConfig, 
+        **kwargs
+    ) -> Dict[str, Any]:
+        pass
+    
+    @abstractmethod
+    async def prepare_request_async(
         self, 
         prompt: str | List[Dict],
         config: ModelConfig, 
@@ -17,7 +26,14 @@ class BaseModelImplementation(ABC):
         pass
 
     @abstractmethod
-    async def parse_response(
+    def parse_response(
+        self, 
+        response: Any
+    ) -> Tuple[MessageBlock, StopReason]:
+        pass
+
+    @abstractmethod
+    async def parse_stream_response(
         self, 
         response: Any
     ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
