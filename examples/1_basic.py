@@ -7,15 +7,14 @@ from termcolor import cprint
 # Add the parent directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.bedrock_llm.client import LLMClient, ModelName
-from src.bedrock_llm.utils.prompt import llama_format
+from src.bedrock_llm.client import LLMClient, ModelName, MessageBlock
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.config.base import RetryConfig
 
 # Create a LLM client
 client = LLMClient(
     region_name="us-east-1",
-    model_name=ModelName.LLAMA_3_2_1B,
+    model_name=ModelName.TITAN_PREMIER,
     retry_config=RetryConfig(
         max_attempts=3
     )
@@ -29,10 +28,27 @@ config = ModelConfig(
 )
 
 # Create a prompt
-prompt = llama_format("What is the capital of Vietnam?")
+prompt = "Who are you?"
 
 # Invoke the model and get results
-response, stop_reason = client.generate(prompt,config)
+response, stop_reason = client.generate(prompt, config)
+
+# Print out the results
+cprint(response.content, "green")
+cprint(stop_reason, "red")
+
+# Create a system prompt with a list of examples
+system = "Your name is Bob, you live in Paris"
+prompt = [
+    MessageBlock(role="user", content="What is the capital of France?"),
+    MessageBlock(role="assistant", content="The capital of France is Paris."),
+    MessageBlock(role="user", content="What is the capital of Germany?"),
+    MessageBlock(role="assistant", content="The capital of Germany is Berlin."),
+    MessageBlock(role="user", content="What is the capital of Italy?")
+]
+
+# Invoke the model and get results
+response, stop_reason = client.generate(prompt, config, system=system)
 
 # Print out the results
 cprint(response.content, "green")

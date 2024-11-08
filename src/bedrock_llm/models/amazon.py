@@ -1,20 +1,42 @@
 import json
+import os
 
-from typing import Any, AsyncGenerator, Tuple, List, Dict, Literal
+from typing import Any, AsyncGenerator, Tuple, List, Dict, Union, Optional
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
+from jinja2 import Environment, FileSystemLoader
 from src.bedrock_llm.schema.message import MessageBlock
 from src.bedrock_llm.types.enums import StopReason
 
 
 class TitanImplementation(BaseModelImplementation):
     
+    # Determine the absolute path to the templates directory
+    TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "../templates")
+    
+    def load_template(
+        self, 
+        prompt: Union[str, List[Dict]], 
+        system: Optional[str], 
+        document: Optional[str],
+    ) -> str:
+        env = Environment(loader=FileSystemLoader(self.TEMPLATE_DIR))
+        template = env.get_template("amazon_template.txt")
+        prompt = template.render({"SYSTEM": system, "REQUEST": prompt})
+        return prompt.strip() + " "
+    
     def prepare_request(
         self, 
-        prompt: str | List[Dict],
-        config: ModelConfig,
+        prompt: Union[str, List[Dict]], 
+        config: ModelConfig,    
+        system: Optional[str]=None, 
+        document: Optional[str]=None,
         **kwargs
     ) -> Dict[str, Any]:
+        
+        if isinstance(prompt, List):
+            prompt = self.load_template(prompt, system, document)
+        
         return {
             "inputText": prompt,
             "textGenerationConfig": {
@@ -27,10 +49,16 @@ class TitanImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
-        prompt: str | List[Dict],
-        config: ModelConfig,
+        prompt: Union[str, List[Dict]], 
+        config: ModelConfig,    
+        system: Optional[str]=None, 
+        document: Optional[str]=None,
         **kwargs
     ) -> Dict[str, Any]:
+        
+        if isinstance(prompt, List):
+            prompt = self.load_template(prompt, system, document)
+        
         return {
             "inputText": prompt,
             "textGenerationConfig": {
@@ -62,7 +90,7 @@ class TitanImplementation(BaseModelImplementation):
     async def parse_stream_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
+    ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None]:
         full_response = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])

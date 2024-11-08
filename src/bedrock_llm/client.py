@@ -8,12 +8,12 @@ from src.bedrock_llm.config.base import RetryConfig
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.schema.message import MessageBlock
 from src.bedrock_llm.models.base import BaseModelImplementation
-from src.bedrock_llm.models.anthropic.anthropic import ClaudeImplementation
-from src.bedrock_llm.models.meta.meta import LlamaImplementation
-from src.bedrock_llm.models.amazon.amazon import TitanImplementation
-from src.bedrock_llm.models.ai21.ai21 import JambaImplementation
-from src.bedrock_llm.models.mistral.mistral import MistralInstructImplementation
-from src.bedrock_llm.models.mistral.mistral import MistralChatImplementation
+from src.bedrock_llm.models.anthropic import ClaudeImplementation
+from src.bedrock_llm.models.meta import LlamaImplementation
+from src.bedrock_llm.models.amazon import TitanImplementation
+from src.bedrock_llm.models.ai21 import JambaImplementation
+from src.bedrock_llm.models.mistral import MistralInstructImplementation
+from src.bedrock_llm.models.mistral import MistralChatImplementation
 from src.bedrock_llm.schema.message import MessageBlock
 from botocore.config import Config
 from botocore.exceptions import ClientError, ReadTimeoutError
