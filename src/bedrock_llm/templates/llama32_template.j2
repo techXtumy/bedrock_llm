@@ -1,0 +1,12 @@
+<|begin_of_text|>{%- if SYSTEM %}<|start_header_id|>system<|end_header_id|>
+
+{{ SYSTEM }}<|eot_id|><|start_header_id|>user<|end_header_id|>{% else %}<|start_header_id|>system<|end_header_id|>
+
+You are a helpful assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>{% endif %}
+{% if REQUEST.content is defined %}
+{{REQUEST.content}}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{% elif REQUEST is iterable%}
+{%- for message in REQUEST %}
+{%- if message.role == "user" %}{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{% elif message.role == "assistant" %}{{ message.content }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+{% endif %}{%- endfor %}{%- endif %}

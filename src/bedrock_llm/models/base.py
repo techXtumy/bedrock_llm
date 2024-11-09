@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncGenerator, Dict, Optional, Tuple, List
+from typing import Any, AsyncGenerator, Dict, Optional, Tuple, List, Union
 
 from src.bedrock_llm.schema.message import MessageBlock
 from src.bedrock_llm.config.model import ModelConfig
@@ -10,7 +10,7 @@ class BaseModelImplementation(ABC):
     @abstractmethod
     def prepare_request(
         self, 
-        prompt: str | List[Dict],
+        prompt: Union[str, MessageBlock, List[Dict]],
         config: ModelConfig, 
         **kwargs
     ) -> Dict[str, Any]:
@@ -19,7 +19,7 @@ class BaseModelImplementation(ABC):
     @abstractmethod
     async def prepare_request_async(
         self, 
-        prompt: str | List[Dict],
+        prompt: Union[str, MessageBlock, List[Dict]],
         config: ModelConfig, 
         **kwargs
     ) -> Dict[str, Any]:
@@ -36,5 +36,5 @@ class BaseModelImplementation(ABC):
     async def parse_stream_response(
         self, 
         response: Any
-    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
+    ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None]:
         pass

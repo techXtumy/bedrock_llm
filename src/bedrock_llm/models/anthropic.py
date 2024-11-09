@@ -1,9 +1,10 @@
 import json
 
-from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict
+from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict, Union
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock, TextBlock, ToolUseBlock
+from src.bedrock_llm.schema.message import MessageBlock, TextBlock, ToolUseBlock, SystemBlock
+from src.bedrock_llm.schema.tools import ToolMetadata
 from src.bedrock_llm.types.enums import StopReason
 
 
@@ -11,10 +12,10 @@ class ClaudeImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
-        prompt: str | List[Dict], 
+        prompt: Union[str, MessageBlock, List[Dict]], 
         config: ModelConfig,
-        system: Optional[str | Dict] = None,
-        tools: Optional[List[Dict] | Dict] = None,
+        system: Optional[Union[str, SystemBlock]] = None,
+        tools: Optional[List[ToolMetadata]] = None,
         tool_choice: Optional[Dict] = None, 
     ) -> Dict[str, Any]:
         
@@ -25,6 +26,9 @@ class ClaudeImplementation(BaseModelImplementation):
                     content=prompt
                 ).model_dump()
             ]
+            
+        if isinstance(prompt, MessageBlock):
+            prompt = [prompt.model_dump()]
         
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
@@ -54,10 +58,10 @@ class ClaudeImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
-        prompt: str | List[Dict], 
+        prompt: Union[str, MessageBlock, List[Dict]], 
         config: ModelConfig,
-        system: Optional[str | Dict] = None,
-        tools: Optional[List[Dict] | Dict] = None,
+        system: Optional[Union[str, SystemBlock]] = None,
+        tools: Optional[List[ToolMetadata]] = None,
         tool_choice: Optional[Dict] = None, 
     ) -> Dict[str, Any]:
         
@@ -68,6 +72,9 @@ class ClaudeImplementation(BaseModelImplementation):
                     content=prompt
                 ).model_dump()
             ]
+        
+        if isinstance(prompt, MessageBlock):
+            prompt = [prompt.model_dump()]
         
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
@@ -119,7 +126,7 @@ class ClaudeImplementation(BaseModelImplementation):
     async def parse_stream_response(
         self, 
         stream: Any
-    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
+    ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None]:
         full_response = ""
         tool_input = ""
         message = MessageBlock(role="assistant", content=[])

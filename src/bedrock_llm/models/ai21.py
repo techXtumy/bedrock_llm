@@ -1,11 +1,9 @@
 import json
-import uuid
-import re
 
-from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional
+from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional, Union
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock, ToolCallBlock
+from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock
 from src.bedrock_llm.types.enums import StopReason
 
 
@@ -13,11 +11,11 @@ class JambaImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
-        prompt: str | List[Dict],
+        prompt: Union[str, MessageBlock, List[Dict]],
         config: ModelConfig,
         system: Optional[str] = None,
         documents: Optional[List[DocumentBlock]] = None,
-        tools: Optional[List[Dict] | Dict] = None,
+        tools: Optional[Union[List[Dict], Dict]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -40,15 +38,18 @@ class JambaImplementation(BaseModelImplementation):
 
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
+        messages = []
         if isinstance(prompt, str):
-            messages = [
+            messages.append(
                 MessageBlock(
                     role="user", 
                     content=prompt
                 ).model_dump()
-            ]
+            )
+        elif isinstance(prompt, MessageBlock):
+            messages.append(prompt.model_dump())
         else:
-            messages = prompt
+            messages.extend(prompt)
         
         if system is not None:
             system = MessageBlock(
@@ -80,11 +81,11 @@ class JambaImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
-        prompt: str | List[Dict],
+        prompt: Union[str, MessageBlock, List[Dict]],
         config: ModelConfig,
         system: Optional[str] = None,
         documents: Optional[List[DocumentBlock]] = None,
-        tools: Optional[List[Dict] | Dict] = None,
+        tools: Optional[Union[List[Dict], Dict]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -107,15 +108,18 @@ class JambaImplementation(BaseModelImplementation):
 
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
+        messages = []
         if isinstance(prompt, str):
-            messages = [
+            messages.append(
                 MessageBlock(
                     role="user", 
                     content=prompt
                 ).model_dump()
-            ]
+            )
+        elif isinstance(prompt, MessageBlock):
+            messages.append(prompt.model_dump())
         else:
-            messages = prompt
+            messages.extend(prompt)
         
         if system is not None:
             system = MessageBlock(
@@ -180,7 +184,7 @@ class JambaImplementation(BaseModelImplementation):
     async def parse_stream_response(
         self,
         stream: Any
-    ) -> AsyncGenerator[Tuple[str | None, StopReason | None, MessageBlock | None], None]:
+    ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None]:
         """
         Parse the response from the Bedrock API, handling both text content
         and tool call requests.

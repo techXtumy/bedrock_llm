@@ -18,7 +18,7 @@ from src.bedrock_llm.schema.message import MessageBlock
 from botocore.config import Config
 from botocore.exceptions import ClientError, ReadTimeoutError
 
-from typing import Dict, Any, AsyncGenerator, Tuple, Optional, List
+from typing import Dict, Any, AsyncGenerator, Tuple, Optional, List, Union
 
 
 class LLMClient:
@@ -83,7 +83,7 @@ class LLMClient:
     
     def generate(
         self,
-        prompt: str | List[MessageBlock] | Dict[str, Any],
+        prompt: Union[str, MessageBlock, List[MessageBlock]],
         config: Optional[ModelConfig] = None,
         **kwargs: Any
     ) -> Tuple[MessageBlock, StopReason]:
@@ -133,7 +133,7 @@ class LLMClient:
     
     async def generate_async(
         self,
-        prompt: str | List[MessageBlock] | Dict[str, Any],
+        prompt: Union[str, MessageBlock, List[MessageBlock]],
         config: Optional[ModelConfig] = None,
         **kwargs: Any
     ) -> AsyncGenerator[Tuple[str | None, StopReason |  None, MessageBlock | None], None]:

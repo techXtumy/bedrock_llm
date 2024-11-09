@@ -8,7 +8,7 @@ from termcolor import cprint
 # Add the parent directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.bedrock_llm.client import LLMClient, ModelName
+from src.bedrock_llm.client import LLMClient, ModelName, MessageBlock
 from src.bedrock_llm.utils.prompt import llama_format, mistral_format, titan_format
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.config.base import RetryConfig
@@ -17,11 +17,8 @@ from src.bedrock_llm.config.base import RetryConfig
 async def main():
     
     # Prompt format
-    prompt = "Bạn là ai?."
+    prompt = MessageBlock(role="user", content="Who are you and what can you do?")
     system = "You are a helpful AI. Answer only in Vietnamese"
-    llama_prompt = llama_format(prompt, system)
-    mistral_prompt = mistral_format(prompt, system)
-    titan_prompt = titan_format(prompt, system)
     config = ModelConfig(
         temperature=0,
         max_tokens=512,
@@ -47,8 +44,9 @@ async def main():
         )
         print("Model: ", model)
         async for token, stop_reason, message in llama_client.generate_async(
-            prompt=llama_prompt,
-            config=config
+            prompt=prompt,
+            config=config,
+            system=system
         ):
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
@@ -69,7 +67,8 @@ async def main():
         )
         print("Model: ", model)
         async for token, stop_reason, message in titan_client.generate_async(
-            prompt=titan_prompt,
+            prompt=prompt,
+            system=system,
             config=config
         ):
             if stop_reason:
@@ -129,8 +128,9 @@ async def main():
     )
     print("Model: ", ModelName.MISTRAL_7B)
     async for token, stop_reason, message in mistral_client.generate_async(
-        prompt=mistral_prompt,
-        config=config
+        prompt=prompt,
+        config=config,
+        system=system
     ):
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
