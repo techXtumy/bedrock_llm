@@ -3,7 +3,8 @@ import json
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional, Union
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock
+from src.bedrock_llm.schema.message import MessageBlock, DocumentBlock, SystemBlock
+from src.bedrock_llm.schema.tools import ToolMetadata
 from src.bedrock_llm.types.enums import StopReason
 
 
@@ -11,11 +12,11 @@ class JambaImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
+        config: ModelConfig, 
         prompt: Union[str, MessageBlock, List[Dict]],
-        config: ModelConfig,
-        system: Optional[str] = None,
-        documents: Optional[List[DocumentBlock]] = None,
-        tools: Optional[Union[List[Dict], Dict]] = None,
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -39,6 +40,10 @@ class JambaImplementation(BaseModelImplementation):
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
         messages = []
+        
+        if tools:
+            raise ValueError("Jamba Model currently does not support tools, please use other LLM")
+        
         if isinstance(prompt, str):
             messages.append(
                 MessageBlock(
@@ -52,6 +57,8 @@ class JambaImplementation(BaseModelImplementation):
             messages.extend(prompt)
         
         if system is not None:
+            if isinstance(system, SystemBlock):
+                system = system.text
             system = MessageBlock(
                 role="system",
                 content=system
@@ -81,11 +88,11 @@ class JambaImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
+        config: ModelConfig, 
         prompt: Union[str, MessageBlock, List[Dict]],
-        config: ModelConfig,
-        system: Optional[str] = None,
-        documents: Optional[List[DocumentBlock]] = None,
-        tools: Optional[Union[List[Dict], Dict]] = None,
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -109,6 +116,10 @@ class JambaImplementation(BaseModelImplementation):
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
         messages = []
+        
+        if tools:
+            raise ValueError("Jamba Model currently does not support tools, please use other LLM")
+        
         if isinstance(prompt, str):
             messages.append(
                 MessageBlock(
@@ -122,6 +133,8 @@ class JambaImplementation(BaseModelImplementation):
             messages.extend(prompt)
         
         if system is not None:
+            if isinstance(system, SystemBlock):
+                system = system.text
             system = MessageBlock(
                 role="system",
                 content=system

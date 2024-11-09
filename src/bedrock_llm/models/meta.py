@@ -5,7 +5,7 @@ from jinja2 import Environment, FileSystemLoader
 from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict, Union
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.models.base import StopReason, MessageBlock
+from src.bedrock_llm.models.base import StopReason, MessageBlock, SystemBlock
 from src.bedrock_llm.schema.tools import ToolMetadata
 
 
@@ -23,21 +23,24 @@ class LlamaImplementation(BaseModelImplementation):
     ) -> str:
         env = Environment(loader=FileSystemLoader(self.TEMPLATE_DIR))
         template = env.get_template("llama32_template.j2")
-        prompt = template.render({"SYSTEM": system, "REQUEST": prompt})
+        prompt = template.render({"SYSTEM": system, "REQUEST": prompt, "TOOLS": tools})
         return prompt
     
     def prepare_request(
         self, 
+        config: ModelConfig, 
         prompt: Union[str, MessageBlock, List[Dict]],
-        config: ModelConfig,
-        system: Optional[str] = None, 
-        document: Optional[str] = None,
-        tools:  Optional[List[ToolMetadata]] = None,
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
+        if isinstance(system, SystemBlock):
+            system = system.text
+        
         if not isinstance(prompt, str):
-            prompt = self.load_template(prompt, system, document, tools)
+            prompt = self.load_template(prompt, system, documents, tools)
             
         print(prompt)
         
@@ -50,16 +53,19 @@ class LlamaImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
+        config: ModelConfig, 
         prompt: Union[str, MessageBlock, List[Dict]],
-        config: ModelConfig,
-        system: Optional[str] = None, 
-        document: Optional[str] = None,
-        tools:  Optional[List[ToolMetadata]] = None,
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
+        if isinstance(system, SystemBlock):
+            system = system.text
+        
         if not isinstance(prompt, str):
-            prompt = self.load_template(prompt, system, document, tools)
+            prompt = self.load_template(prompt, system, documents, tools)
             
         print(prompt)
         
@@ -75,9 +81,16 @@ class LlamaImplementation(BaseModelImplementation):
         response: Any
     ) -> Tuple[MessageBlock, StopReason]:
         chunk = json.loads(response.read())
+        response = chunk["generation"].strip()
+        if response[0] == '[' and response[-1] == ']':
+            message = MessageBlock(
+                role="tool",
+                content=response
+            )
+            return message, StopReason.TOOL_USE
         message = MessageBlock(
             role="assistant",
-            content=chunk["generation"]
+            content=response
         )
         if chunk["stop_reason"] == "stop":
             return message, StopReason.END_TURN
@@ -96,9 +109,17 @@ class LlamaImplementation(BaseModelImplementation):
             yield chunk["generation"], None, None
             full_answer.append(chunk["generation"])
             if chunk.get("stop_reason"):
+                response = "".join(full_answer).strip()
+                if response[0] == '[' and response[-1] == ']':
+                    message = MessageBlock(
+                        role="tool",
+                        content=response
+                    )
+                    yield None, StopReason.TOOL_USE, message
+                    return
                 message = MessageBlock(
                     role="assistant",
-                    content="".join(full_answer)
+                    content=response
                 )
                 if chunk["stop_reason"] == "stop":
                     yield None, StopReason.END_TURN, message

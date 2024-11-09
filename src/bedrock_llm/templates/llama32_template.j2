@@ -4,9 +4,21 @@
 
 You are a helpful assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>{% endif %}
 {% if REQUEST.content is defined %}
-{{REQUEST.content}}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-{% elif REQUEST is iterable%}
+{%- if TOOLS is defined %}
+{% include 'llama32_tool_format.j2' %}
+{%- endif %}
+{{ REQUEST.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{% elif REQUEST is iterable %}
 {%- for message in REQUEST %}
-{%- if message.role == "user" %}{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-{% elif message.role == "assistant" %}{{ message.content }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-{% endif %}{%- endfor %}{%- endif %}
+{%- if loop.last and message.role == "user" %}
+{%- if TOOLS is defined %}{% include 'llama32_tool_format.j2' %}{%- endif %}
+{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{% elif message.role == "user" %}
+{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{% elif message.role == "tool" %}
+<|python_tag|>{{ message.content }}<|eot_id|><|start_header_id|>ipython<|end_header_id|>
+{% elif message.role == "assistant" %}
+{{ message.content }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+{% endif %}
+{%- endfor %}
+{%- endif %}

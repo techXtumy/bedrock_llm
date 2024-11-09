@@ -12,12 +12,16 @@ class ClaudeImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
-        tools: Optional[List[ToolMetadata]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         tool_choice: Optional[Dict] = None, 
     ) -> Dict[str, Any]:
+        
+        if documents:
+            raise ValueError("Claude does not support documents RAG in the request payload")
         
         if isinstance(prompt, str):
             prompt = [
@@ -58,12 +62,16 @@ class ClaudeImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
-        tools: Optional[List[ToolMetadata]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         tool_choice: Optional[Dict] = None, 
     ) -> Dict[str, Any]:
+        
+        if documents:
+            raise ValueError("Claude does not support documents RAG in the request payload")
         
         if isinstance(prompt, str):
             prompt = [

@@ -9,7 +9,6 @@ from termcolor import cprint
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.bedrock_llm.client import LLMClient, ModelName, MessageBlock
-from src.bedrock_llm.utils.prompt import llama_format, mistral_format, titan_format
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.config.base import RetryConfig
 
@@ -44,8 +43,8 @@ async def main():
         )
         print("Model: ", model)
         async for token, stop_reason, message in llama_client.generate_async(
-            prompt=prompt,
             config=config,
+            prompt=prompt,
             system=system
         ):
             if stop_reason:
@@ -67,9 +66,9 @@ async def main():
         )
         print("Model: ", model)
         async for token, stop_reason, message in titan_client.generate_async(
+            config=config,
             prompt=prompt,
-            system=system,
-            config=config
+            system=system
         ):
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
@@ -90,8 +89,8 @@ async def main():
         )
         print("Model: ", model)
         async for token, stop_reason, message in claude_client.generate_async(
-            prompt=prompt,
             config=config,
+            prompt=prompt,
             system=system
         ):
             if token:
@@ -110,8 +109,9 @@ async def main():
         )
         print("Model: ", model)
         async for token, stop_reason, message in jamba_client.generate_async(
+            config=config,
             prompt=prompt,
-            config=config
+            system=system
         ):
             if stop_reason:
                 cprint(f"\nGeneration stopped: {stop_reason}", color="red")
@@ -128,8 +128,8 @@ async def main():
     )
     print("Model: ", ModelName.MISTRAL_7B)
     async for token, stop_reason, message in mistral_client.generate_async(
-        prompt=prompt,
         config=config,
+        prompt=prompt,
         system=system
     ):
         if stop_reason:
@@ -146,8 +146,8 @@ async def main():
     )
     print("Model: ", ModelName.MISTRAL_LARGE_2)
     async for token, stop_reason, message in mistral_client.generate_async(
-        prompt=prompt,
         config=config,
+        prompt=prompt,
         system=system
     ):
         if stop_reason:

@@ -35,7 +35,7 @@ class InputSchema(BaseModel):
     
     Attributes:
         type (Literal["object"]): The type of input schema.
-        properties (Dict | None): A dictionary of property names and their corresponding schemas. If nothing, put empty Dict
+        properties (Dict[str, PropertyAttr] | None): A dictionary of property names and their corresponding schemas. If nothing, put empty Dict
         required (List[str] | None): A list of property names that are required. If nothing, put empty List
 
     Example:
@@ -49,8 +49,8 @@ class InputSchema(BaseModel):
         ... )
     """
     type: Literal["object", "dict"]
-    properties: Dict
-    required: List[str]
+    properties: Optional[Dict[str, PropertyAttr]]
+    required: Optional[List[str]]
    
     
 class ToolMetadata(BaseModel):

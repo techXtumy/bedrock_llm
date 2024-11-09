@@ -5,7 +5,7 @@ from jinja2 import Environment, FileSystemLoader
 from typing import Any, AsyncGenerator, Optional, List, Dict, Tuple, Union
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock
+from src.bedrock_llm.schema.message import MessageBlock, SystemBlock
 from src.bedrock_llm.schema.tools import ToolMetadata
 from src.bedrock_llm.types.enums import ToolChoiceEnum, StopReason
 
@@ -17,13 +17,17 @@ class MistralChatImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,
-        system: Optional[str] = None,
-        tools: Optional[Union[List[Dict], Dict]] = None,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs
     ) -> Dict[str, Any]:
+        
+        if documents:
+            raise ValueError("Mistral Large 2 does not support documents RAG, please use Agent RAG features")
         
         messages = []
         if isinstance(prompt, str):
@@ -37,8 +41,10 @@ class MistralChatImplementation(BaseModelImplementation):
             messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
-            
+        
         if system is not None:
+            if isinstance(system, SystemBlock):
+                system = system.text
             system = MessageBlock(
                 role="system",
                 content=system
@@ -65,13 +71,17 @@ class MistralChatImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,
-        system: Optional[str] = None,
-        tools: Optional[Union[List[Dict], Dict]] = None,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs
     ) -> Dict[str, Any]:
+        
+        if documents:
+            raise ValueError("Mistral Large 2 does not support documents RAG, please use Agent RAG features")
         
         messages = []
         if isinstance(prompt, str):
@@ -85,8 +95,10 @@ class MistralChatImplementation(BaseModelImplementation):
             messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
-            
+        
         if system is not None:
+            if isinstance(system, SystemBlock):
+                system = system.text
             system = MessageBlock(
                 role="system",
                 content=system
@@ -171,8 +183,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         self, 
         prompt: Union[MessageBlock, List[Dict]], 
         system: Optional[str], 
-        document: Optional[str],
-        tools: Optional[List[ToolMetadata]] = None
+        document: Optional[str]
     ) -> str:
         env = Environment(loader=FileSystemLoader(self.TEMPLATE_DIR))
         template = env.get_template("mistral7_template.j2")
@@ -182,15 +193,22 @@ class MistralInstructImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,
-        system: Optional[str] = None, 
-        document: Optional[str] = None,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
+        if tools:
+            raise ValueError("Mistral 7B Instruct does not support tools, please use other LLM")
+        
+        if isinstance(system, SystemBlock):
+            system = system.text
+        
         if not isinstance(prompt, str):
-            prompt = self.load_template(prompt, system, document)
+            prompt = self.load_template(prompt, system, documents)
         
         return {
             "prompt": prompt,
@@ -201,16 +219,23 @@ class MistralInstructImplementation(BaseModelImplementation):
         }
     
     async def prepare_request_async(
-        self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,
-        system: Optional[str] = None, 
-        document: Optional[str] = None,
+        self,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
+        if tools:
+            raise ValueError("Mistral 7B Instruct does not support tools, please use other LLM")
+        
+        if isinstance(system, SystemBlock):
+            system = system.text
+        
         if not isinstance(prompt, str):
-            prompt = self.load_template(prompt, system, document)
+            prompt = self.load_template(prompt, system, documents)
         print(prompt)
         
         return {

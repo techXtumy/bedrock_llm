@@ -83,8 +83,11 @@ class LLMClient:
     
     def generate(
         self,
+        config: ModelConfig,
         prompt: Union[str, MessageBlock, List[MessageBlock]],
-        config: Optional[ModelConfig] = None,
+        system: Optional[str] = None,
+        documents:  Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         **kwargs: Any
     ) -> Tuple[MessageBlock, StopReason]:
         """
@@ -106,7 +109,14 @@ class LLMClient:
         for attempt in range(self.retry_config.max_retries):
             try:
                 # Prepare the request using the model implementation
-                request_body = self.model_implementation.prepare_request(prompt, config, **kwargs)
+                request_body = self.model_implementation.prepare_request(
+                    config=config, 
+                    prompt=prompt, 
+                    system=system, 
+                    documents=documents,
+                    tools=tools,
+                    **kwargs
+                )
                 
                 # Invoke the model
                 response = self.bedrock_client.invoke_model(
@@ -133,8 +143,11 @@ class LLMClient:
     
     async def generate_async(
         self,
+        config: ModelConfig,
         prompt: Union[str, MessageBlock, List[MessageBlock]],
-        config: Optional[ModelConfig] = None,
+        system: Optional[str] = None,
+        documents:  Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         **kwargs: Any
     ) -> AsyncGenerator[Tuple[str | None, StopReason |  None, MessageBlock | None], None]:
         """
@@ -168,7 +181,14 @@ class LLMClient:
         for attempt in range(self.retry_config.max_retries):
             try:
                 # Prepare the request using the model implementation
-                request_body = await self.model_implementation.prepare_request_async(prompt, config, **kwargs)
+                request_body = await self.model_implementation.prepare_request_async(
+                    config=config, 
+                    prompt=prompt,
+                    system=system, 
+                    documents=documents,
+                    tools=tools,
+                    **kwargs
+                )
                 
                 # Invoke the model
                 response = await asyncio.to_thread(

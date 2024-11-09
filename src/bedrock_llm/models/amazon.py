@@ -5,7 +5,8 @@ from jinja2 import Environment, FileSystemLoader
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Union, Optional
 
 from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock
+from src.bedrock_llm.schema.message import MessageBlock, SystemBlock
+from src.bedrock_llm.schema.tools import ToolMetadata
 from src.bedrock_llm.types.enums import StopReason
 
 
@@ -22,6 +23,7 @@ class TitanImplementation(BaseModelImplementation):
         prompt: Union[MessageBlock, List[Dict]], 
         system: Optional[str], 
         document: Optional[str],
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]]
     ) -> str:
         env = Environment(loader=FileSystemLoader(self.TEMPLATE_DIR))
         template = env.get_template("amazon_template.j2")
@@ -30,15 +32,19 @@ class TitanImplementation(BaseModelImplementation):
     
     def prepare_request(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,    
-        system: Optional[str]=None, 
-        document: Optional[str]=None,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
+        if isinstance(system, SystemBlock):
+            system = system.text
+        
         if not isinstance(prompt, str):
-            prompt = self.load_template(prompt, system, document)
+            prompt = self.load_template(prompt, system, documents, tools)
         
         return {
             "inputText": prompt,
@@ -52,15 +58,19 @@ class TitanImplementation(BaseModelImplementation):
     
     async def prepare_request_async(
         self, 
-        prompt: Union[str, MessageBlock, List[Dict]], 
-        config: ModelConfig,    
-        system: Optional[str]=None, 
-        document: Optional[str]=None,
+        config: ModelConfig, 
+        prompt: Union[str, MessageBlock, List[Dict]],
+        system: Optional[Union[str, SystemBlock]] = None,
+        documents: Optional[Union[List[str], Dict, str]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
+        if isinstance(system, SystemBlock):
+            system = system.text
+        
         if not isinstance(prompt, str):
-            prompt = self.load_template(prompt, system, document)
+            prompt = self.load_template(prompt, system, documents, tools)
             
         print(prompt)
         

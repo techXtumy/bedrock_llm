@@ -521,7 +521,7 @@ async def llama_agent():
         system_prompt = f"You are a helpful assistant. Today Time Date: {datetime.now(tz = pytz.timezone("Asia/Bangkok")).strftime('%Y-%m-%d %H:%M:%S %Z')}.\n" + tools_prompt_format
         formatted_system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n{system_prompt}<|eot_id|>"
         
-        async for chunk, stop_reason in client.generate(
+        async for chunk, stop_reason, message in client.generate_async(
             prompt=formatted_system_prompt+"".join(chat_history),
             config=config
         ):

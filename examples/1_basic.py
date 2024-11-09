@@ -31,7 +31,7 @@ config = ModelConfig(
 prompt = "Who are you?"
 
 # Invoke the model and get results
-response, stop_reason = client.generate(prompt, config)
+response, stop_reason = client.generate(config, prompt)
 
 # Print out the results
 cprint(response.content, "green")
@@ -51,7 +51,7 @@ prompt = [
 document = "The capital of Italy is Venice now."
 
 # Invoke the model and get results
-response, stop_reason = client.generate(prompt, config, system=system, document=document)
+response, stop_reason = client.generate(config, prompt, system, document)
 
 # Print out the results
 cprint(response.content, "green")
