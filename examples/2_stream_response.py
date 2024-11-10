@@ -21,18 +21,12 @@ $$p(\mathbf{h}_T) = \frac{\exp\left(-\frac{1}{2\tau^2}|\mathbf{h}_T - \mu|^2\rig
 
 **Hint:** Use tools from non-linear algebra and machine learning theory, such as spectral analysis and the Karush-Kuhn-Tucker conditions."""
     
-    config = ModelConfig(
-        temperature=0,
-        max_tokens=2048,
-        top_p=1,
-        top_k=70
-    )
     client = LLMClient(
         region_name="us-east-1",
         model_name=ModelName.MISTRAL_7B
     )
     
-    async for token, stop_reason, message in client.generate_async(config, prompt):
+    async for token, stop_reason, message in client.generate_async(prompt):
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break

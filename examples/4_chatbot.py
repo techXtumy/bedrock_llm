@@ -29,75 +29,50 @@ async def chat_with_titan():
     client = LLMClient(
         region_name="us-east-1",
         model_name=ModelName.TITAN_PREMIER,
+        memory=[],
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
-    
-    # Initialize the chat history
-    chat_history = []
-    
-    # Receive first user input
-    input_prompt = await get_user_input("Enter a prompt: ")
-    
     while True:
-
-        # Save the user input to chat history
-        chat_history.append(f"User: {input_prompt}\nBot: ")
+        input_prompt = await get_user_input("Enter a prompt: ")
+        prompt = MessageBlock(role="user", content=input_prompt)
 
         # Simple text generation
-        async for token, stop_reason, response in client.generate_async(
-            prompt="".join(chat_history)
+        async for token, stop_reason,_ in client.generate_async(
+            prompt=prompt
         ):
             if stop_reason is None:
                 cprint(token, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
-
-        # Save response to chat history
-        chat_history.append(f"{chunk}\n\n")
-        
+                
         # Check for bye bye
         if input_prompt.lower() == "/bye":
             break
         
-        # Receive user input
-        input_prompt = await get_user_input("Enter a prompt: ")
-        
 
 async def chat_with_claude():
-    # Initialize the client
+    # Initialize the client with memory enable
     client = LLMClient(
-        region_name="us-west-2",
+        region_name="us-east-1",
         model_name=ModelName.CLAUDE_3_5_SONNET,
+        memory=[],
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
-    
-    # Initialize the chat history
-    chat_history = []
     
     while True:
         
         # Receive user input
         input_prompt = await get_user_input("Enter a prompt: ")
-        
-        # Save the user input to chat history
-        chat_history.append(
-            MessageBlock(
-                role="user", 
-                content=input_prompt
-            ).model_dump()
-        )
+        prompt = MessageBlock(role="user", content=input_prompt)
         
         # Simple text generation
-        async for token, stop_reason, response in client.generate_async(
-            prompt=chat_history
+        async for token, stop_reason,_ in client.generate_async(
+            prompt=prompt
         ):
             if stop_reason is None:
                 cprint(token, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
-        
-        # Save response to chat history
-        chat_history.append(response.model_dump())
         
         # Check for bye bye
         if input_prompt.lower() == "/bye":
@@ -109,36 +84,22 @@ async def chat_with_llama():
     client = LLMClient(
         region_name="us-west-2",
         model_name=ModelName.LLAMA_3_2_90B,
+        memory=[],
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
-    
-
-    # Initialize the chat history as a list for efficient string handling
-    chat_history = []
-    
-    # Predefine the system message to avoid repetition
-    system = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful AI assistant<|eot_id|>"
-    chat_history.append(system)
 
     while True:
         # Get user input asynchronously
         input = await get_user_input("Enter a prompt: ")
-        
-        # Format and save user message to chat history
-        formatted_msg = f"<|start_header_id|>user<|end_header_id|>\n\n{input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-        chat_history.append(formatted_msg)
+        prompt = MessageBlock(role="user", content=input)
         
         # Generate a response from the model
-        async for chunk, stop_reason in client.generate(prompt="".join(chat_history)):
+        async for chunk, stop_reason,_ in client.generate_async(prompt=prompt):
             if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
-        
-        # Append the bot response to chat history
-        chat_history.append(f"{chunk}<|eot_id|>")
-        
-        # Exit if user types "/bye"
+
         if input.lower() == "/bye":
             break
 
@@ -146,35 +107,29 @@ async def chat_with_llama():
 async def chat_with_mistral():
     # Initialize the client
     client = LLMClient(
-        region_name="us-west-2",
+        region_name="us-east-1",
         model_name=ModelName.MISTRAL_7B,
+        memory = [],
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
     
-    chat_history = []
-    
     # Predefine the system message to avoid repetition
-    system = "<s>[INST] You are a helpful AI assistant that can answer and keep the conversation going.\n\n"
-    chat_history.append(system)
+    system = "You are a helpful AI assistant that can answer and keep the conversation going."
 
     while True:
-        input = await get_user_input("Enter a prompt: ")
-        
-        # Format and save user message to chat history
-        formatted_msg = f"{input} [/INST] "
-        chat_history.append(formatted_msg)
+        prompt = MessageBlock(
+            role="user", 
+            content=await get_user_input("Enter a prompt: ")
+        )
         
         # Generate a response from the model
-        async for chunk, stop_reason in client.generate(prompt="".join(chat_history)):
+        async for chunk, stop_reason,_ in client.generate_async(prompt=prompt, system=system):
             if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
         
-        # Append the bot response to chat history
-        chat_history.append(f"{chunk} </s>[INST] ")
-        
-        if input.lower() == "/bye":
+        if prompt.content.lower() == "/bye":
             break
 
 
@@ -183,28 +138,20 @@ async def chat_with_jamba():
     client = LLMClient(
         region_name="us-east-1",
         model_name=ModelName.JAMBA_1_5_MINI,
+        memory=[],
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0)
     )
 
-    chat_history = []
-
     while True:
         input = await get_user_input("Enter a prompt: ")
-        
-        chat_history.append(MessageBlock(
-            role="user",
-            content=input
-        ).model_dump())
+        prompt = MessageBlock(role="user",content=input)
 
         # Generate a response from the model
-        async for chunk, stop_reason in client.generate(prompt=chat_history):
+        async for chunk, stop_reason,_ in client.generate_async(prompt=prompt):
             if stop_reason is None:
                 cprint(chunk, color="green", end="", flush=True)
             else:
                 cprint(f"\nGeneration stopped: {stop_reason}\n", color="red")
-
-        # Append the bot response to chat history
-        chat_history.append(chunk.model_dump())
         
         # Check for bye bye
         if input.lower() == "/bye":
@@ -216,11 +163,11 @@ if __name__ == "__main__":
     model_selection = input("Select model (1 for Claude, 2 for Titan, 3 for Llama, 4 for Mistral and 5 for Jamba): ")
     if model_selection == "1":
         asyncio.run(chat_with_claude())
-    # elif model_selection == "2":
-    #     asyncio.run(chat_with_titan())
-    # elif model_selection == "3":
-    #     asyncio.run(chat_with_llama())
-    # elif model_selection == "4":
-    #     asyncio.run(chat_with_mistral())
-    # elif model_selection == "5":
-    #     asyncio.run(chat_with_jamba())
+    elif model_selection == "2":
+        asyncio.run(chat_with_titan())
+    elif model_selection == "3":
+        asyncio.run(chat_with_llama())
+    elif model_selection == "4":
+        asyncio.run(chat_with_mistral())
+    elif model_selection == "5":
+        asyncio.run(chat_with_jamba())

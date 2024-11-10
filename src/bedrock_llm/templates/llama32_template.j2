@@ -17,4 +17,5 @@ You are a helpful assistant.{% if not TOOLS %}<|eot_id|>{% if REQUEST.content is
 {{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{%- elif message.role == "user" %}<|start_header_id|>user<|end_header_id|>
 
 {{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-{% endif %}{% endfor %}{% endif %}
+{% endif %}{% endfor %}
+{% endif %}

@@ -16,6 +16,7 @@ from src.bedrock_llm.config.base import RetryConfig
 client = LLMClient(
     region_name="us-east-1",
     model_name=ModelName.LLAMA_3_2_3B,
+    memory=[],
     retry_config=RetryConfig(
         max_attempts=3
     )
@@ -65,12 +66,10 @@ response, stop_reason = client.generate(
 cprint(f"Calling function: {response.content}", "cyan")
 cprint(stop_reason, "red")
 
-prompt.append(MessageBlock(role="assistant", content=response.content))
-prompt.append(MessageBlock(role="tool", content="20*C"))
-
+# Send the tool result back to the model
 response, stop_reason = client.generate(
     config=config, 
-    prompt=prompt,
+    prompt=MessageBlock(role="tool", content="20*C"),
 )
 
 # Print out the results

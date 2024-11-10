@@ -19,6 +19,7 @@ system = "You are a helpful assistant. You have access to realtime information. 
 client = LLMClient(
     region_name="us-east-1",
     model_name=ModelName.LLAMA_3_2_3B,
+    memory=[],
     retry_config=RetryConfig(
         max_attempts=3
     )
