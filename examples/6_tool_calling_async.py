@@ -65,7 +65,7 @@ async def get_weather(location: str):
 
 async def call_tools(response: str):
     reslt_list = []
-    tools_list = eval(response)
+    tools_list = eval(response.strip("<|python_tag|>"))
     for func in tools_list:
         tool_result = await asyncio.wait_for(func, timeout=10)
         reslt_list.append(str(tool_result))

@@ -15,6 +15,7 @@ from src.bedrock_llm.models.ai21 import JambaImplementation
 from src.bedrock_llm.models.mistral import MistralInstructImplementation
 from src.bedrock_llm.models.mistral import MistralChatImplementation
 from src.bedrock_llm.schema.message import MessageBlock
+from src.bedrock_llm.schema.tools import ToolMetadata
 from botocore.config import Config
 from botocore.exceptions import ClientError, ReadTimeoutError
 
@@ -90,7 +91,7 @@ class LLMClient:
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         system: Optional[str] = None,
         documents:  Optional[str] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: Optional[Union[List[Dict[str, Any]], List[ToolMetadata]]] = None,
         config: Optional[ModelConfig] = None,
         auto_update_memory: bool = True,
         **kwargs: Any
@@ -110,7 +111,7 @@ class LLMClient:
                 Applied at the beginning of the conversation. Defaults to None.
             documents (Optional[str]): Additional context for the model's response,
                 typically used for RAG applications. Defaults to None.
-            tools (Optional[List[Dict[str, Any]]]): Function calling definitions that
+            tools (Optional[List[Dict[str, Any]], List[ToolMetadata]]): Function calling definitions that
                 the model can use. Each tool must include name, description, and 
                 parameters schema. Defaults to None.
             config (Optional[ModelConfig]): Controls model behavior with parameters like temperature,
@@ -181,10 +182,12 @@ class LLMClient:
         if self.memory is not None and auto_update_memory:
             if isinstance(prompt, str):
                 raise ValueError("If memory is set, prompt must be a MessageBlock or list of MessageBlock")
-            if isinstance(prompt, MessageBlock):
+            elif isinstance(prompt, MessageBlock):
                 self.memory.append(prompt.model_dump())
-            if isinstance(prompt, list):
+            elif isinstance(prompt[0], MessageBlock):
                 self.memory.extend([x.model_dump() for x in prompt])
+            elif isinstance(prompt, list):
+                self.memory.extend(prompt)
             invoke_message = self.memory
         else:
             invoke_message = prompt
@@ -234,7 +237,7 @@ class LLMClient:
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         system: Optional[str] = None,
         documents:  Optional[str] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: Optional[Union[List[Dict[str, Any]], List[ToolMetadata]]] = None,
         config: Optional[ModelConfig] = None,
         auto_update_memory: bool = True,
         **kwargs: Any
@@ -251,7 +254,7 @@ class LLMClient:
                 Can be a string, single MessageBlock, or list of MessageBlocks.
             system (Optional[str]): System message to guide model behavior. Defaults to None.
             documents (Optional[str]): Reference documents for context. Defaults to None.
-            tools (Optional[List[Dict[str, Any]]]): List of tools available to the model. Defaults to None.
+            tools (Optional[List[Dict[str, Any]], List[ToolMetadata]]): List of tools available to the model. Defaults to None.
             config (Optional[ModelConfig]): Controls model behavior with parameters like temperature,
                 max_tokens, top_p, etc. If None, uses default configuration. Defaults to None
             auto_update_memory (bool): Whether to automatically update conversation memory
@@ -339,15 +342,15 @@ class LLMClient:
         if self.memory is not None and auto_update_memory:
             if isinstance(prompt, str):
                 raise ValueError("If memory is set, prompt must be a MessageBlock or list of MessageBlock")
-            if isinstance(prompt, MessageBlock):
+            elif isinstance(prompt, MessageBlock):
                 self.memory.append(prompt.model_dump())
-            if isinstance(prompt, list):
+            elif isinstance(prompt, list):
                 self.memory.extend([x.model_dump() for x in prompt])
+            elif isinstance(prompt, list):
+                self.memory.extend(prompt)
             invoke_message = self.memory
         else:
             invoke_message = prompt
-        
-        print(invoke_message)
         
         for attempt in range(self.retry_config.max_retries):
             try:

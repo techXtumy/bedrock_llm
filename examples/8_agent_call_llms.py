@@ -183,7 +183,7 @@ async def process_tools_claude_way(
     for tool in tools_list:
         result = ""
         
-        if isinstance(tool, TextBlock):
+        if not isinstance(tool, ToolUseBlock):
             continue
         
         tool_function = tool.name
