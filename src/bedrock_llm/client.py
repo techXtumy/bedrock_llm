@@ -106,8 +106,6 @@ class LLMClient:
                 - List[MessageBlock]: Conversation history as sequence of messages
             system (Optional[str]): System instructions to control model behavior.
                 Applied at the beginning of the conversation. Defaults to None.
-            documents (Optional[str]): Additional context for the model's response,
-                typically used for RAG applications. Defaults to None.
             tools (Optional[List[Dict[str, Any]], List[ToolMetadata]]): Function calling definitions that
                 the model can use. Each tool must include name, description, and 
                 parameters schema. Defaults to None.
@@ -248,7 +246,6 @@ class LLMClient:
             prompt (Union[str, MessageBlock, List[MessageBlock]]): The input prompt for the model.
                 Can be a string, single MessageBlock, or list of MessageBlocks.
             system (Optional[str]): System message to guide model behavior. Defaults to None.
-            documents (Optional[str]): Reference documents for context. Defaults to None.
             tools (Optional[List[Dict[str, Any]], List[ToolMetadata]]): List of tools available to the model. Defaults to None.
             config (Optional[ModelConfig]): Controls model behavior with parameters like temperature,
                 max_tokens, top_p, etc. If None, uses default configuration. Defaults to None

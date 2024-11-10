@@ -121,7 +121,6 @@ class Agent(LLMClient):
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         tools: List[str],
         system: Optional[str] = None,
-        documents: Optional[str] = None,
         config: Optional[ModelConfig] = None,
         **kwargs: Any
     ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock], Optional[Union[List[ToolResultBlock], List[str], List[Dict]]]], None]:
@@ -136,7 +135,6 @@ class Agent(LLMClient):
             prompt (Union[str, MessageBlock, List[MessageBlock]]): The input prompt or message(s).
             tools (List[str]): List of tool names to be used.
             system (Optional[str]): System message to be used in the conversation.
-            documents (Optional[str]): Any relevant documents to be included in the context.
             config (Optional[ModelConfig]): Configuration for the model.
             **kwargs: Additional keyword arguments to be passed to the generate_async method.
 
@@ -156,11 +154,10 @@ class Agent(LLMClient):
         
         for _ in range(self.max_iterations):
             async for token, stop_reason, response in super().generate_async(
-                self.memory, 
-                system, 
-                documents, 
-                tool_metadata, 
-                config, 
+                prompt=self.memory, 
+                system=system,
+                tools=tool_metadata, 
+                config=config, 
                 auto_update_memory=False,
                 **kwargs
             ):
