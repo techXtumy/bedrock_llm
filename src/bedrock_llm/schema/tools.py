@@ -18,7 +18,7 @@ class PropertyAttr(BaseModel):
         ... )
     """
     type: Literal["string", "integer", "float", "boolean"]
-    enum: List[str] | None = None
+    enum: Optional[List[str]] = None
     description: str
     
     def model_dump(self, **kwargs):
@@ -99,7 +99,7 @@ class ToolMetadata(BaseModel):
     name: str
     description: str
     input_schema: Optional[InputSchema]
-    cache_control: CacheControl | None = None
+    cache_control: Optional[CacheControl] = None
     
     def model_dump(self, **kwargs):
         kwargs.setdefault('exclude_none', True)

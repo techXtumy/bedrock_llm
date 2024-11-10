@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Literal, Dict, Any
+from typing import List, Literal, Dict, Any, Optional, Union
 
 from ..schema.cache import CacheControl
 
@@ -19,7 +19,7 @@ class UserMetadat(BaseModel):
         ...     user_id="XXXXXXXX"
         ... )
     """
-    user_id: str | None = None
+    user_id: Optional[str] = None
 
 
 class Image(BaseModel):
@@ -65,7 +65,7 @@ class SystemBlock(BaseModel):
     
     See more: https://docs.anthropic.com/en/docs/system-prompts
     """
-    cache_control: CacheControl | None = None
+    cache_control: Optional[CacheControl] = None
     type: Literal["text"]
     text: str
    
@@ -86,7 +86,7 @@ class TextBlock(BaseModel):
         ...     cache_control=CacheControl("ephemeral")
         ... )
     """
-    cache_control: CacheControl | None = None
+    cache_control: Optional[CacheControl] = None
     type: Literal["text"]
     text: str
     
@@ -118,7 +118,7 @@ class ImageBlock(BaseModel):
         
     See more: https://docs.anthropic.com/en/docs/build-with-claude/vision#prompt-examples
     """
-    # cache_control: CacheControl | None = None
+    cache_control: Optional[CacheControl] = None
     type: Literal["image"]
     source: Image
 
@@ -143,7 +143,7 @@ class ToolUseBlock(BaseModel):
         ...     input={"key": "value"}
         ... )
     """
-    cache_control: CacheControl | None = None
+    cache_control: Optional[CacheControl] = None
     type: Literal["tool_use"]
     id: str
     name: str
@@ -175,11 +175,11 @@ class ToolResultBlock(BaseModel):
         ...     content="The capital of France is Paris."
         ... )
     """
-    cache_control: CacheControl | None = None
+    cache_control: Optional[CacheControl] = None
     type: Literal["tool_result"]
     tool_use_id: str
     is_error: bool
-    content: TextBlock | ImageBlock | str
+    content: Union[TextBlock, ImageBlock, str]
     
     def model_dump(self, **kwargs):
         kwargs.setdefault('exclude_none', True)
@@ -204,7 +204,7 @@ class ToolCallBlock(BaseModel):
         ... )
     """
     id: str
-    type: str | None
+    type: Optional[str]
     function: Dict[str, Any]
 
 
@@ -259,9 +259,9 @@ class MessageBlock(BaseModel):
         See more for Jamaba Model: https://docs.ai21.com/reference/jamba-15-api-ref
     """
     role: Literal["user", "assistant", "tool", "system"]
-    content: List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock | List] | str
-    tool_calls: List[ToolCallBlock] | None = None
-    tool_calls_id: str | None = None
+    content: Union[List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, List]], str]
+    tool_calls: Optional[List[ToolCallBlock]] = None
+    tool_calls_id: Optional[str] = None
     
     # Override model_dump to automatically exclude None and unset fields
     def model_dump(self, **kwargs):
