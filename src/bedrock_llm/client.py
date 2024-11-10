@@ -239,7 +239,7 @@ class LLMClient:
         config: Optional[ModelConfig] = None,
         auto_update_memory: bool = True,
         **kwargs: Any
-    ) -> AsyncGenerator[Tuple[str | None, StopReason |  None, MessageBlock | None], None]:
+    ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None]:
         """
         Asynchronously generates responses from the model with streaming capability.
 
