@@ -47,11 +47,8 @@ prompt = [
     MessageBlock(role="user", content="What is your name and what is the capital of Italy?")
 ]
 
-# Create Document for RAG
-document = "The capital of Italy is Venice now."
-
 # Invoke the model and get results
-response, stop_reason = client.generate(prompt, system, document, config=config)
+response, stop_reason = client.generate(prompt, system, config=config)
 
 # Print out the results
 cprint(response.content, "green")

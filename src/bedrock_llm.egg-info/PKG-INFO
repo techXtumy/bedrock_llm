@@ -1,3 +1,28 @@
+Metadata-Version: 2.1
+Name: bedrock_llm
+Version: 0.1.1
+Summary: A Python LLM framework for interacting with AWS Bedrock services
+Home-page: https://github.com/yourusername/bedrock_llm
+Author: Your Name
+Author-email: an.tq@techxcorp.com
+Keywords: aws bedrock llm machine-learning ai
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic<2.0.0,>=1.8.0
+Requires-Dist: boto3>=1.18.0
+Requires-Dist: botocore>=1.21.0
+Requires-Dist: jinja2
+
 # Bedrock LLM
 
 A Python library for building LLM applications using Amazon Bedrock Provider.
