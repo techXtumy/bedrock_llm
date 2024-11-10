@@ -88,7 +88,6 @@ class LLMClient:
         self,
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         system: Optional[str] = None,
-        documents:  Optional[str] = None,
         tools: Optional[Union[List[Dict[str, Any]], List[ToolMetadata]]] = None,
         config: Optional[ModelConfig] = None,
         auto_update_memory: bool = True,
@@ -197,7 +196,6 @@ class LLMClient:
                     config=config,
                     prompt=invoke_message,
                     system=system,
-                    documents=documents,
                     tools=tools,
                     **kwargs
                 )
@@ -234,7 +232,6 @@ class LLMClient:
         self,
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         system: Optional[str] = None,
-        documents:  Optional[str] = None,
         tools: Optional[Union[List[Dict[str, Any]], List[ToolMetadata]]] = None,
         config: Optional[ModelConfig] = None,
         auto_update_memory: bool = True,
@@ -356,8 +353,7 @@ class LLMClient:
                 request_body = await self.model_implementation.prepare_request_async(
                     config=config, 
                     prompt=invoke_message,
-                    system=system, 
-                    documents=documents,
+                    system=system,
                     tools=tools,
                     **kwargs
                 )
