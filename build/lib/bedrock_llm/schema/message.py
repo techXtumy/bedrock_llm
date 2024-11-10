@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Literal, Dict, Any
 
-from src.bedrock_llm.schema.cache import CacheControl
+from ..schema.cache import CacheControl
 
 
 class UserMetadat(BaseModel):

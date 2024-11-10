@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Literal, Dict, List, Optional
-from src.bedrock_llm.schema.cache import CacheControl
+from ..schema.cache import CacheControl
 
 
 class PropertyAttr(BaseModel):

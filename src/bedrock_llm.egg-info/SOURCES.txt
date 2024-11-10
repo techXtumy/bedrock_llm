@@ -55,7 +55,6 @@ src/bedrock_llm/types/enums.py
 src/bedrock_llm/types/__pycache__/__init__.cpython-312.pyc
 src/bedrock_llm/types/__pycache__/aliases.cpython-312.pyc
 src/bedrock_llm/types/__pycache__/enums.cpython-312.pyc
-tests/hugging-face.py
 tests/test_agent.py
 tests/test_base_model_implementation.py
 tests/test_client.py

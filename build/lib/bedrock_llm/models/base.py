@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, AsyncGenerator, Dict, Optional, Tuple, List, Union
 
-from src.bedrock_llm.schema.message import MessageBlock, SystemBlock
-from src.bedrock_llm.schema.tools import ToolMetadata
-from src.bedrock_llm.config.model import ModelConfig
-from src.bedrock_llm.types.enums import StopReason
+from ..schema.message import MessageBlock, SystemBlock
+from ..schema.tools import ToolMetadata
+from ..config.model import ModelConfig
+from ..types.enums import StopReason
 
 
 class BaseModelImplementation(ABC):
