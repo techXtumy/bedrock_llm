@@ -124,12 +124,12 @@ if __name__ == "__main__":
 For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/wiki).
 
 You can also see some examples of how to use and build LLM flow using the libary 
-- [basic](/examples/1_basic.py)
-- [stream response](/examples/2_stream_response.py)
-- [all support llm](/examples/3_all_llm.py)
-- [simple chat bot](/examples/4_chatbot.py)
-- [tool calling](/examples/5_tool_calling.py)
-- [agent](/examples/7_agent.py)
+- [basic](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/1_basic.py)
+- [stream response](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/2_stream_response.py)
+- [all support llm](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/3_all_llm.py)
+- [simple chat bot](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/4_chatbot.py)
+- [tool calling](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/5_tool_calling.py)
+- [agent](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/7_agent.py)
 
 and more to come, we are working on it :)
 
