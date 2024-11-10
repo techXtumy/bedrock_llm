@@ -40,11 +40,16 @@ class TitanImplementation(BaseModelImplementation):
         **kwargs
     ) -> Dict[str, Any]:
         
+        if tools:
+            raise ValueError("Titan models are not support function callings and tools. Please use another models")
+        
         if isinstance(system, SystemBlock):
             system = system.text
         
         if not isinstance(prompt, str):
             prompt = self.load_template(prompt, system, documents, tools)
+        
+        print(prompt)
         
         return {
             "inputText": prompt,
@@ -65,6 +70,9 @@ class TitanImplementation(BaseModelImplementation):
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
     ) -> Dict[str, Any]:
+        
+        if tools:
+            raise ValueError("Titan models are not support function callings and tools. Please use another models")
         
         if isinstance(system, SystemBlock):
             system = system.text

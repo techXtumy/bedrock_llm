@@ -50,15 +50,16 @@ get_weather_tool = ToolMetadata(
 # Create a system prompt with a list of examples
 history = [
     MessageBlock(role="user", content="What is the weather in Denmark"),
-    MessageBlock(role="tool", content="10*C"),
+    MessageBlock(role="assistant", content="[get_weather(location='Denmark')]"),
+    MessageBlock(role="tool", content="tools_result: Denmark is 10*C"),
     MessageBlock(role="assistant", content="The weather in Denmark is 10*C"),
-    MessageBlock(role="user", content="What is the weather in New York?")
+    MessageBlock(role="user", content="What is the weather in New York and Toronto?")
 ]
 
 
 async def get_weather(location: str):
     # Mock function to get weather
-    return "20*C"
+    return f"tools_result: {location} is 20*C"
 
 
 async def call_tools(response: str):
@@ -88,10 +89,12 @@ async def main():
                 # Call the tool
                 result = await call_tools(response.content)
                 history.append(result)
+                print() # Print break line for readability
                 break
             
         if stop_reason == StopReason.END_TURN:
             history.append(response)
+            print()
             break
     
 

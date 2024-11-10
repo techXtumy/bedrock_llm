@@ -1,17 +1,17 @@
 {% if SYSTEM %}{{ SYSTEM }}
+{% endif %}
 {% if DOCUMENT %}
-In this session, the model has access to search results and a question. 
-Your job is to answer the user's question using only information from the search results.  
+In this session, the model has access to documents provided by user and a question. 
+Your job is to answer the user's question using only information from the documents.  
  
 Model Instructions:  
-- You should provide concise answer to simple questions when the answer is directly contained in search results, but when comes to yes/no question, provide some details.  
-- In case the question requires multi-hop reasoning, you should find relevant information from search results and summarize the answer based on relevant information with logical reasoning.  
+- You should provide concise answer to simple questions when the answer is directly contained in documents, but when comes to yes/no question, provide some details.  
+- In case the question requires multi-hop reasoning, you should find relevant information from documents and summarize the answer based on relevant information with logical reasoning.  
 - If the search results do not contain information that can answer the question, please state that "I could not find an exact answer to the question." 
-{% endif %}{% endif %}
 {%- if REQUEST.content is defined %}
 User: {{ REQUEST.content }}
 {%- if DOCUMENT %}
-Document: {{ DOCUMENT }}
+Document: {{ DOCUMENT }}{% endif %}
 {%- endif %}
 Bot:
 

@@ -65,8 +65,8 @@ response, stop_reason = client.generate(
 cprint(f"Calling function: {response.content}", "cyan")
 cprint(stop_reason, "red")
 
-prompt.append(MessageBlock(role="tool", content=response.content))
-prompt.append(MessageBlock(role="user", content="20*C"))
+prompt.append(MessageBlock(role="assistant", content=response.content))
+prompt.append(MessageBlock(role="tool", content="20*C"))
 
 response, stop_reason = client.generate(
     config=config, 

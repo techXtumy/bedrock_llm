@@ -1,24 +1,20 @@
 <|begin_of_text|>{%- if SYSTEM %}<|start_header_id|>system<|end_header_id|>
 
-{{ SYSTEM }}<|eot_id|><|start_header_id|>user<|end_header_id|>{% else %}<|start_header_id|>system<|end_header_id|>
+{{ SYSTEM }}{% if TOOLS is not defined %}<|eot_id|>{% if REQUEST is not iterable %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% else %}<|start_header_id|>system<|end_header_id|>
 
-You are a helpful assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>{% endif %}
-{% if REQUEST.content is defined %}
-{%- if TOOLS is defined %}
-{% include 'llama32_tool_format.j2' %}
+You are a helpful assistant.{% if TOOLS is not defined %}<|eot_id|>{% if REQUEST is not iterable %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% endif %}{%- if TOOLS is defined %}
+{% include 'llama32_tool_format.j2' %}<|eot_id|>{% if REQUEST is not iterable %}<|start_header_id|>user<|end_header_id|>{% endif %}
 {%- endif %}
+{%- if REQUEST.content is defined %}
+
 {{ REQUEST.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
 {% elif REQUEST is iterable %}
 {%- for message in REQUEST %}
-{%- if loop.last and message.role == "user" %}
-{%- if TOOLS is defined %}{% include 'llama32_tool_format.j2' %}{%- endif %}
+{%- if message.role == "assistant" %}
+{{ message.content }}<|eot_id|>{%- elif message.role == "tool" %}<|start_header_id|>ipython<|end_header_id|>
+
+{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{%- elif message.role == "user" %}<|start_header_id|>user<|end_header_id|>
+
 {{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-{% elif message.role == "user" %}
-{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-{% elif message.role == "tool" %}
-<|python_tag|>{{ message.content }}<|eot_id|><|start_header_id|>ipython<|end_header_id|>
-{% elif message.role == "assistant" %}
-{{ message.content }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-{% endif %}
-{%- endfor %}
-{%- endif %}
+{% endif %}{% endfor %}{% endif %}

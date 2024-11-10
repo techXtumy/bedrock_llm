@@ -112,8 +112,8 @@ class LlamaImplementation(BaseModelImplementation):
                 response = "".join(full_answer).strip()
                 if response[0] == '[' and response[-1] == ']':
                     message = MessageBlock(
-                        role="tool",
-                        content=response
+                        role="assistant",
+                        content="<|python_tag|>"+response
                     )
                     yield None, StopReason.TOOL_USE, message
                     return
