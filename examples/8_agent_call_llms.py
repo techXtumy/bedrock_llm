@@ -127,7 +127,7 @@ async def get_imagine_news(
     )
     try:
         async for message_chunk, stop_reason in llama_client.generate(
-            prompt=llama_format(user_messages=user, system=system),
+            prompt=user,
             config=model_config
         ):
             response.append(message_chunk)  # Collect all chunks
@@ -159,7 +159,7 @@ async def get_trade_advice(
     )
     try:
         async for message_chunk, stop_reason in llama_client.generate(
-            prompt=llama_format(user_messages=user, system=system),
+            prompt=user,
             config=model_config
         ):
             response.append(message_chunk)  # Collect all chunks
@@ -509,11 +509,11 @@ async def llama_agent():
         )
     )
     
-    tools_prompt_format = llama_tool_format([
+    tools_prompt_format = [
         get_company_info_tool,
         get_imagine_news_tool,
         get_trade_advice_tool
-    ])
+    ]
     
     while True:
         
