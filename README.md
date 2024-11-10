@@ -34,7 +34,7 @@ from bedrock_llm import LLMClient, ModelName, ModelConfig
 # Create a LLM client
 client = LLMClient(
     region_name="us-east-1",
-    model_name=ModelName.TITAN_PREMIER
+    model_name=ModelName.MISTRAL_7B
 )
 
 # Create a configuration for inference parameters
@@ -55,66 +55,51 @@ cprint(response.content, "green")
 cprint(stop_reason, "red")
 ```
 
-### Simple agent
+### Simple tool calling
 
 ```python
-from bedrock_llm import Agent, ModelName, 
-from bedrock_llm import MessageBlock, ToolMetadata, InputSchema, PropertyAttr
+from bedrock_llm import Agent, ModelName
+from bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
 
-system = "You are a helpful assistant. You have access to realtime information. You can use tools to get the real time data weather of a city."
-
-# Create a LLM client
 agent = Agent(
     region_name="us-east-1",
     model_name=ModelName.CLAUDE_3_5_HAIKU
 )
 
-# Create tool definition
+# Define the tool description for the model
 get_weather_tool = ToolMetadata(
     name="get_weather",
-    description="Get the real time weather of a city",
+    description="Get the weather in specific location",
     input_schema=InputSchema(
         type="object",
         properties={
             "location": PropertyAttr(
                 type="string",
-                description="The city to get the weather of"
+                description="Location to search for, example: New York, WashingtonDC, ..."
             )
         },
         required=["location"]
     )
 )
 
-# Create user prompt
-prompt = MessageBlock(role="user", content="What is the weather in New York and Toronto?")
-
+# Define the tool
 @Agent.tool(get_weather_tool)
 async def get_weather(location: str):
-    # Mock function to get weather
-    return f"tools_result: {location} is 20*C"
+    return f"{location} is 20*C"
 
 
 async def main():
-    # Invoke the model and get results
+    prompt = input("User: ")
+
     async for token, stop_reason, response, tool_result in agent.generate_and_action_async(
         prompt=prompt,
-        system=system,
         tools=["get_weather"]
     ):
-        # Print out the results
         if token:
             print(token, end="", flush=True)
-        
-        if tool_result:
-            print(f"\n{tool_result}")
-        
-        if stop_reason == StopReason.TOOL_USE:
-            for x in range(1, len(response.content)):
-                print(f"\n{response.content[x].model_dump()}", end="", flush=True)
+        if stop_reason:
             print(f"\n{stop_reason}")
-        elif stop_reason:
-            print(f"\n{stop_reason}")
-    
+
 
 if __name__ == "__main__":
     import asyncio
