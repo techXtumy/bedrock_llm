@@ -1,9 +1,9 @@
 <|begin_of_text|>{%- if SYSTEM %}<|start_header_id|>system<|end_header_id|>
 
-{{ SYSTEM }}{% if TOOLS is not defined %}<|eot_id|>{% if REQUEST is not iterable %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% else %}<|start_header_id|>system<|end_header_id|>
+{{ SYSTEM }}{% if not TOOLS %}<|eot_id|>{% if REQUEST.content is defined %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% else %}<|start_header_id|>system<|end_header_id|>
 
-You are a helpful assistant.{% if TOOLS is not defined %}<|eot_id|>{% if REQUEST is not iterable %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% endif %}{%- if TOOLS is defined %}
-{% include 'llama32_tool_format.j2' %}<|eot_id|>{% if REQUEST is not iterable %}<|start_header_id|>user<|end_header_id|>{% endif %}
+You are a helpful assistant.{% if not TOOLS %}<|eot_id|>{% if REQUEST.content is defined %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% endif %}{%- if TOOLS %}
+{% include 'llama32_tool_format.j2' %}<|eot_id|>{% if REQUEST.content is defined %}<|start_header_id|>user<|end_header_id|>{% endif %}
 {%- endif %}
 {%- if REQUEST.content is defined %}
 

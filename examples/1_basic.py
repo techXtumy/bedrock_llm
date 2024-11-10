@@ -14,7 +14,7 @@ from src.bedrock_llm.config.base import RetryConfig
 # Create a LLM client
 client = LLMClient(
     region_name="us-east-1",
-    model_name=ModelName.TITAN_EXPRESS,
+    model_name=ModelName.TITAN_PREMIER,
     retry_config=RetryConfig(
         max_attempts=3
     )
