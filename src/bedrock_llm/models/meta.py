@@ -4,9 +4,9 @@ import os
 from jinja2 import Environment, FileSystemLoader
 from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict, Union
 
-from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.models.base import StopReason, MessageBlock, SystemBlock
-from src.bedrock_llm.schema.tools import ToolMetadata
+from ..models.base import BaseModelImplementation, ModelConfig
+from ..models.base import StopReason, MessageBlock, SystemBlock
+from ..schema.tools import ToolMetadata
 
 
 class LlamaImplementation(BaseModelImplementation):

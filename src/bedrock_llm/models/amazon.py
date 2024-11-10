@@ -4,10 +4,10 @@ import os
 from jinja2 import Environment, FileSystemLoader
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Union, Optional
 
-from src.bedrock_llm.models.base import BaseModelImplementation, ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock, SystemBlock
-from src.bedrock_llm.schema.tools import ToolMetadata
-from src.bedrock_llm.types.enums import StopReason
+from ..models.base import BaseModelImplementation, ModelConfig
+from ..schema.message import MessageBlock, SystemBlock
+from ..schema.tools import ToolMetadata
+from ..types.enums import StopReason
 
 
 class TitanImplementation(BaseModelImplementation):
