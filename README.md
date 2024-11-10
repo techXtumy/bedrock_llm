@@ -136,7 +136,7 @@ and more to come, we are working on it :)
 ## Requirements
 
 - Python 3.7+
-- pydantic>=1.8.0,<2.0.0
+- pydantic>=2.0.0
 - boto3>=1.18.0
 - botocore>=1.21.0
 - jinja>=3.1.4
