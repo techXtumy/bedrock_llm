@@ -1,15 +1,8 @@
-import sys
-import os
 import asyncio
 
 # Add for print console with color
 from termcolor import cprint
-
-# Add the parent directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from src.bedrock_llm.client import LLMClient, ModelName
-from src.bedrock_llm.config.model import ModelConfig
+from bedrock_llm import LLMClient, ModelName
 
 
 async def main():

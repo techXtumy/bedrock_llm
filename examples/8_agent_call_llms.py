@@ -17,7 +17,6 @@ from src.bedrock_llm.config.base import RetryConfig
 from src.bedrock_llm.config.model import ModelConfig
 from src.bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
 from src.bedrock_llm.schema.message import MessageBlock, ToolUseBlock, TextBlock, ToolResultBlock
-from src.bedrock_llm.utils.prompt import llama_format, llama_tool_format
 
 from typing import Literal, List, Optional, Coroutine
 

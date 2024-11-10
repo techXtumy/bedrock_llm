@@ -1,16 +1,8 @@
 import asyncio
-import sys
-import os
 
+# Add for print console with color
 from termcolor import cprint
-
-# Add the parent directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from src.bedrock_llm.client import LLMClient
-from src.bedrock_llm.types.enums import ModelName
-from src.bedrock_llm.config.base import RetryConfig
-from src.bedrock_llm.schema.message import MessageBlock
+from bedrock_llm import LLMClient, ModelName, MessageBlock, RetryConfig
 
 
 # Function to handle user input asynchronously

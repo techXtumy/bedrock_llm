@@ -1,16 +1,9 @@
-import sys
-import os
-
 # Add for print console with color
 from termcolor import cprint
 
-# Add the parent directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from bedrock_llm import LLMClient, ModelName, MessageBlock, ModelConfig, RetryConfig
+from bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
 
-from src.bedrock_llm.client import LLMClient, ModelName, MessageBlock
-from src.bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
-from src.bedrock_llm.config.model import ModelConfig
-from src.bedrock_llm.config.base import RetryConfig
 
 # Create a LLM client
 client = LLMClient(
