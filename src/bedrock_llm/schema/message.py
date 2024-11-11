@@ -274,21 +274,3 @@ class MessageBlock(BaseModel):
         kwargs.setdefault('exclude_none', True)
         kwargs.setdefault('exclude_unset', True)
         return super().model_dump_json(**kwargs)
-
-
-class DocumentBlock(BaseModel):
-    """
-    Document block.
-
-    Attributes:
-        content (str): The content of the document.
-        metadata (List[Dict[Literal["key", "value"], str]]): The metadata of the document.
-
-    Example:
-        >>> document_block = DocumentBlock(
-        ...     content="This is a document.",
-        ...     metadata=[{"key": "source", "value": "example.com"}]
-        ... )
-    """
-    content: str
-    metadata: List[Dict[Literal["key", "value"], str]]
