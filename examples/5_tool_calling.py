@@ -8,7 +8,7 @@ from bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
 # Create a LLM client
 client = LLMClient(
     region_name="us-east-1",
-    model_name=ModelName.LLAMA_3_2_3B,
+    model_name=ModelName.TITAN_PREMIER,
     memory=[],
     retry_config=RetryConfig(
         max_attempts=3

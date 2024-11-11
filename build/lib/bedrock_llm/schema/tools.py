@@ -51,6 +51,11 @@ class InputSchema(BaseModel):
     type: Literal["object", "dict"]
     properties: Optional[Dict[str, PropertyAttr]]
     required: Optional[List[str]]
+    
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('exclude_unset', True)
+        return super().model_dump(**kwargs)
    
     
 class ToolMetadata(BaseModel):

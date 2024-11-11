@@ -5,7 +5,7 @@ from jinja2 import Environment, FileSystemLoader
 from typing import Any, AsyncGenerator, Optional, List, Dict, Tuple, Union
 
 from ..models.base import BaseModelImplementation, ModelConfig
-from ..schema.message import MessageBlock, SystemBlock
+from ..schema.message import MessageBlock, SystemBlock, ToolCallBlock, TextBlock
 from ..schema.tools import ToolMetadata
 from ..types.enums import ToolChoiceEnum, StopReason
 
@@ -15,26 +15,79 @@ class MistralChatImplementation(BaseModelImplementation):
     Read more: https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-mistral-large-2407.html
     """
     
+    def _parse_tool_metadata(self, tool: Union[ToolMetadata, Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Parse a ToolMetadata object or a dictionary into the format required by the Mistral model.
+        """
+
+        if isinstance(tool, dict):
+            # Handle all dictionary inputs consistently
+            if "type" in tool and tool["type"] == "function":
+                function_data = tool.get("function", {})
+            else:
+                function_data = tool
+
+            return {
+                "type": "function",
+                "function": {
+                    "name": function_data.get("name", "unnamed_function"),
+                    "description": function_data.get("description", "No description provided"),
+                    "parameters": function_data.get("input_schema", {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    })
+                }
+            }
+
+        if isinstance(tool, ToolMetadata):
+            mistral_tool = {
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                }
+            }
+            
+            if tool.input_schema:
+                for prop_name, prop_attr in tool.input_schema.properties.items():
+                    mistral_tool["function"]["parameters"]["properties"][prop_name] = {
+                        "type": prop_attr.type,
+                        "description": prop_attr.description
+                    }
+                
+                if tool.input_schema.required:
+                    mistral_tool["function"]["parameters"]["required"] = tool.input_schema.required
+            
+            return mistral_tool
+
+        raise ValueError(f"Unsupported tool type: {type(tool)}. Expected Dict or ToolMetadata.")
+    
     def prepare_request(
         self, 
         config: ModelConfig, 
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
-        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict], ToolMetadata, Dict]] = None,
         tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs
     ) -> Dict[str, Any]:
-         
-        if tools and not isinstance(tools, (list, dict)):
-            raise ValueError("Tools must be a list or a dictionary.")
+
+        if tools and not isinstance(tools, (list, dict, ToolMetadata)):
+            raise ValueError("Tools must be a list, dictionary, or ToolMetadata object.")
         
         messages = []
         if isinstance(prompt, str):
             messages.append(MessageBlock(role="user", content=prompt).model_dump())
         elif isinstance(prompt, MessageBlock):
             messages.append(prompt.model_dump())
-        else:
-            messages.extend(prompt)
+        elif isinstance(prompt, list):
+            messages.extend([msg.model_dump() if isinstance(msg, MessageBlock) else msg for msg in prompt])
         
         if system is not None:
             system_content = system.text if isinstance(system, SystemBlock) else system
@@ -49,7 +102,18 @@ class MistralChatImplementation(BaseModelImplementation):
         }
         
         if tools is not None:
-            request_body["tools"] = tools if isinstance(tools, list) else [tools]
+            if isinstance(tools, (dict, ToolMetadata)):
+                parsed_tools = [self._parse_tool_metadata(tools)]
+            elif isinstance(tools, list):
+                parsed_tools = []
+                for tool in tools:
+                    if isinstance(tool, (dict, ToolMetadata)):
+                        parsed_tools.append(self._parse_tool_metadata(tool))
+                    else:
+                        raise ValueError(f"Unsupported tool type in list: {type(tool)}. Expected Dict or ToolMetadata.")
+            else:
+                raise ValueError(f"Unsupported tools type: {type(tools)}. Expected List, Dict, or ToolMetadata.")
+            request_body["tools"] = parsed_tools
         
         if tool_choice is not None:
             request_body["tool_choice"] = tool_choice
@@ -61,27 +125,21 @@ class MistralChatImplementation(BaseModelImplementation):
         config: ModelConfig, 
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
-        documents: Optional[Union[List[str], Dict, str]] = None,
-        tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
+        tools: Optional[Union[List[ToolMetadata], List[Dict], ToolMetadata, Dict]] = None,
         tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs
     ) -> Dict[str, Any]:
         
-        if documents:
-            raise ValueError("Mistral Large 2 does not support documents RAG, please use Agent RAG features")
+        if tools and not isinstance(tools, (list, dict, ToolMetadata)):
+            raise ValueError("Tools must be a list, dictionary, or ToolMetadata object.")
         
         messages = []
         if isinstance(prompt, str):
-            messages.append(
-                MessageBlock(
-                    role="user", 
-                    content=prompt
-                ).model_dump()
-            )
+            messages.append(MessageBlock(role="user", content=prompt).model_dump())
         elif isinstance(prompt, MessageBlock):
             messages.append(prompt.model_dump())
-        else:
-            messages.extend(prompt)
+        elif isinstance(prompt, list):
+            messages.extend([msg.model_dump() if isinstance(msg, MessageBlock) else msg for msg in prompt])
         
         if system is not None:
             if isinstance(system, SystemBlock):
@@ -101,13 +159,18 @@ class MistralChatImplementation(BaseModelImplementation):
         
         # Conditionally add tools and tool_choice if they are not None
         if tools is not None:
-            if isinstance(tools, dict):
-                tools = [tools]
-            request_body["tools"] = tools
-        
-        if tool_choice is not None:
-            request_body["tool_choice"] = tool_choice
-        
+            if isinstance(tools, (dict, ToolMetadata)):
+                parsed_tools = [self._parse_tool_metadata(tools)]
+            elif isinstance(tools, list):
+                parsed_tools = []
+                for tool in tools:
+                    if isinstance(tool, (dict, ToolMetadata)):
+                        parsed_tools.append(self._parse_tool_metadata(tool))
+                    else:
+                        raise ValueError(f"Unsupported tool type in list: {type(tool)}. Expected Dict or ToolMetadata.")
+            else:
+                raise ValueError(f"Unsupported tools type: {type(tools)}. Expected List, Dict, or ToolMetadata.")
+            request_body["tools"] = parsed_tools
         return request_body
     
     def parse_response(
@@ -139,14 +202,24 @@ class MistralChatImplementation(BaseModelImplementation):
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["choices"][0]
-            if chunk["stop_reason"]:    
+            if chunk["stop_reason"]:
+                content = "".join(full_response) if full_response else ""
                 message = MessageBlock(
                     role="assistant",
-                    content="".join(full_response)
+                    content=[TextBlock(type="text", text=content)] if content else None
                 )
                 if chunk["stop_reason"] == "stop":
                     yield None, StopReason.END_TURN, message
                 elif chunk["stop_reason"] == "tool_calls":
+                    if "tool_calls" in chunk["message"]:
+                        tool_calls = [
+                            ToolCallBlock(
+                                id=tool_call["id"],
+                                type=tool_call["type"],
+                                function=tool_call["function"]
+                            ) for tool_call in chunk["message"]["tool_calls"]
+                        ]
+                        message.tool_calls = tool_calls
                     yield None, StopReason.TOOL_USE, message
                 elif chunk["stop_reason"] == "length":
                     yield None, StopReason.MAX_TOKENS, message
@@ -154,8 +227,20 @@ class MistralChatImplementation(BaseModelImplementation):
                     yield None, StopReason.ERROR, message
                 return
             else:
-                yield chunk["message"]["content"], None, None
-                full_response.append(chunk["message"]["content"])
+                if "content" in chunk["message"] and chunk["message"]["content"]:
+                    yield chunk["message"]["content"], None, None
+                    full_response.append(chunk["message"]["content"])
+                elif "tool_calls" in chunk["message"]:
+                    # Handle streaming tool calls
+                    tool_calls = [
+                        ToolCallBlock(
+                            id=tool_call["id"],
+                            type=tool_call["type"],
+                            function=tool_call["function"]
+                        ) for tool_call in chunk["message"]["tool_calls"]
+                    ]
+                    message = MessageBlock(role="assistant", content=[TextBlock(type="text", text="")], tool_calls=tool_calls)
+                    yield None, None, message
             
 
 class MistralInstructImplementation(BaseModelImplementation):

@@ -193,7 +193,7 @@ class ToolCallBlock(BaseModel):
 
     Attributes:
         id (str): The ID of the tool call.
-        type (str): This param is only valid for **Jamba Model (AI21)**
+        type (str): This param is set for the type of the function. Return by model
         function (Dict[str | Any]): The function call to make.
 
     Example:
@@ -202,6 +202,9 @@ class ToolCallBlock(BaseModel):
         ...     type="function",
         ...     function={"name": "tool_name", "arguments": {"key": "value"}}
         ... )
+        
+    Read more on Mistral AI: https://docs.mistral.ai/api/#tag/agents/operation/agents_completion_v1_agents_completions_post
+    Read more on Jamba AI21: https://docs.ai21.com/reference/jamba-15-api-ref
     """
     id: str
     type: Optional[str]
@@ -219,9 +222,10 @@ class MessageBlock(BaseModel):
 
     Attributes:
         role (Literal["user", "assistant", "tool", "system"]): Whether this is a user prompt or an assistant response. The `tool` and `system` role is explicitly only for **Jamba Model (AI21)** and **Mistral Large Model**
-        content (List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock] | str): The content of the message.
+        content (List[TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock] | str | None): The content of the message. The content only valid for None value for **Mistral Large 2** and **Jamba Model** cases.
+        name (str | None): The name of the function that you return when calling. Only support for **Mistral Large 2**, combine with the `tool` role for explicit tool result return from the user.
         tool_calls (List[ToolCallBlock] | None):If the assistant called a tool as requested and successfully returned a result, include the tool call results here to enable context for future responses by the model. Explicitly only for **Jamba Model (AI21)** and **Mistral Large Model**. For Anthropic model, use `ToolUseBlock` inside the `content` instead.
-        tool_calls_id (str | None): The ID of the tool call after running the tool. This will act as a tool result ID for context. Explicitly only for **Jamba Model (AI21)**. For Anthropic model, use `ToolResultBlock` inside the `content` instead.
+        tool_call_id (str | None): The ID of the tool call after running the tool. This will act as a tool result ID for context. Explicitly only for **Jamba Model (AI21)**. For Anthropic model, use `ToolResultBlock` inside the `content` instead.
 
     Note:
         - For Anthropic model, use `ToolUseBlock` and `ToolResultBlock` inside the `content` instead of `tool_calls` and `tool_calls_id`.
@@ -259,9 +263,10 @@ class MessageBlock(BaseModel):
         See more for Jamaba Model: https://docs.ai21.com/reference/jamba-15-api-ref
     """
     role: Literal["user", "assistant", "tool", "system"]
-    content: Union[List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, List]], str]
+    content: Optional[Union[List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, List]], str]]
+    name: Optional[str] = None
     tool_calls: Optional[List[ToolCallBlock]] = None
-    tool_calls_id: Optional[str] = None
+    tool_call_id: Optional[str] = None
     
     # Override model_dump to automatically exclude None and unset fields
     def model_dump(self, **kwargs):
@@ -274,21 +279,3 @@ class MessageBlock(BaseModel):
         kwargs.setdefault('exclude_none', True)
         kwargs.setdefault('exclude_unset', True)
         return super().model_dump_json(**kwargs)
-
-
-class DocumentBlock(BaseModel):
-    """
-    Document block.
-
-    Attributes:
-        content (str): The content of the document.
-        metadata (List[Dict[Literal["key", "value"], str]]): The metadata of the document.
-
-    Example:
-        >>> document_block = DocumentBlock(
-        ...     content="This is a document.",
-        ...     metadata=[{"key": "source", "value": "example.com"}]
-        ... )
-    """
-    content: str
-    metadata: List[Dict[Literal["key", "value"], str]]

@@ -3,7 +3,7 @@ import json
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional, Union
 
 from ..models.base import BaseModelImplementation, ModelConfig
-from ..schema.message import MessageBlock, DocumentBlock, SystemBlock
+from ..schema.message import MessageBlock, SystemBlock
 from ..schema.tools import ToolMetadata
 from ..types.enums import StopReason
 

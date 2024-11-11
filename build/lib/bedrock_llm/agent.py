@@ -5,7 +5,7 @@ from .client import LLMClient
 from .types.enums import ModelName, StopReason
 from .config.base import RetryConfig
 from .config.model import ModelConfig
-from .schema.message import MessageBlock, ToolUseBlock, ToolResultBlock
+from .schema.message import MessageBlock, ToolUseBlock, ToolResultBlock, ToolCallBlock
 from .schema.tools import ToolMetadata
 
 from typing import Dict, Any, AsyncGenerator, Tuple, Optional, List, Union
@@ -66,7 +66,7 @@ class Agent(LLMClient):
     
     async def __process_tools(
         self,
-        tools_list: List[ToolUseBlock]
+        tools_list: Union[List[ToolUseBlock], List[ToolCallBlock]]
     ) -> MessageBlock:
         """
         Process a list of tool use requests and return the results.
@@ -84,34 +84,56 @@ class Agent(LLMClient):
             If a tool is not found or an error occurs during execution, an error message
             is included in the result.
         """
-        message = MessageBlock(role="user", content=[])
-
+        if isinstance(tools_list[0], ToolUseBlock):
+            message = MessageBlock(role="user", content=[])
+            state=1
+        else:
+            message = []
+            state=0
+            
         for tool in tools_list:
-            if not isinstance(tool, ToolUseBlock):
+            if not isinstance(tool, ToolUseBlock) and not isinstance(tool, ToolCallBlock):
                 continue
+        
+            if state:   # Process tool in Claude, Llama Way
+                tool_name = tool.name
+                tool_data = self.tool_functions.get(tool_name)
             
-            tool_name = tool.name
-            tool_data = self.tool_functions.get(tool_name)
-            
-            if tool_data:
-                try:
-                    result = await tool_data["function"](**tool.input) if tool_data["is_async"] else tool_data["function"](**tool.input)
-                    is_error = False
-                except Exception as e:
-                    result = str(e)
+                if tool_data:
+                    try:
+                        result = await tool_data["function"](**tool.input) if tool_data["is_async"] else tool_data["function"](**tool.input)
+                        is_error = False
+                    except Exception as e:
+                        result = str(e)
+                        is_error = True
+                else:
+                    result = f"Tool {tool_name} not found"
                     is_error = True
-            else:
-                result = f"Tool {tool_name} not found"
-                is_error = True
 
-            message.content.append(
-                ToolResultBlock(
-                    type="tool_result",
-                    tool_use_id=tool.id,
-                    is_error=is_error,
-                    content=str(result)
+                message.content.append(
+                    ToolResultBlock(
+                        type="tool_result",
+                        tool_use_id=tool.id,
+                        is_error=is_error,
+                        content=str(result)
+                    )
                 )
-            )
+            else:   # Process tool in Mistral AI, Jamaba Way
+                tool_name = tool.function
+                tool_params = eval(tool_name["arguments"])
+                tool_data = self.tool_functions.get(tool_name["name"])
+                
+                if tool_data:
+                    try:
+                        result = await tool_data["function"](**tool_params) if tool_data["is_async"] else tool_data["function"](**tool_params)
+                    except Exception as e:
+                        result = str(e)
+                else:
+                    result = f"Tool {tool_name} not found"
+                
+                message.append(
+                    MessageBlock(role="tool", name=tool_name["name"], content=result, tool_call_id=tool.id)
+                )
 
         return message   
     
@@ -168,9 +190,13 @@ class Agent(LLMClient):
                     yield token, None, None, None
                 elif stop_reason == StopReason.TOOL_USE:
                     yield None, stop_reason, response, None
-                    result = await self.__process_tools(response.content)
-                    yield None, None, None, result.content
-                    self.memory.append(result.model_dump())
+                    result = await self.__process_tools(response.content if not response.tool_calls else response.tool_calls)
+                    if isinstance(result, list):
+                        yield None, None, None, result
+                        self.memory.extend(result)
+                    else:
+                        yield None, None, None, result.content
+                        self.memory.append(result.model_dump())
                     break
                 else:
                     yield None, stop_reason, response, None
@@ -189,6 +215,3 @@ class Agent(LLMClient):
             self.memory.extend(prompt)
         else:
             raise ValueError("Invalid prompt format")
-
-
-        
