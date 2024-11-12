@@ -4,6 +4,8 @@ A Python library for building LLM applications using Amazon Bedrock Provider bot
 
 The library is crafted to create best practices, production ready on Anthropic Model Family, Llama, Amazon Titan Text, MistralAI and AI21.
 
+![Conceptual Architecture](/assests/bedrock_llm.png)
+
 ## Features
 
 - Support for Retrieval-Augmented Generation (RAG)
