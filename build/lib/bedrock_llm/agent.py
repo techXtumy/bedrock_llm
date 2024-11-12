@@ -84,7 +84,7 @@ class Agent(LLMClient):
             If a tool is not found or an error occurs during execution, an error message
             is included in the result.
         """
-        if isinstance(tools_list[0], ToolUseBlock):
+        if isinstance(tools_list[-1], ToolUseBlock):
             message = MessageBlock(role="user", content=[])
             state=1
         else:

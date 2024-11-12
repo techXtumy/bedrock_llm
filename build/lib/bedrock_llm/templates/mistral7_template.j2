@@ -1,0 +1,12 @@
+<s>[INST] {%- if SYSTEM %} {{ SYSTEM }}{%- else %} You are a helpful assistant.{% endif %}
+{% if REQUEST.content is defined %}
+{{ REQUEST.content }} [/INST]
+{% elif REQUEST is iterable %}
+{% for message in REQUEST %}
+{%- if message.role == "user" %}
+{{- message.content }} [/INST]
+{%- elif message.role == "assistant" %}
+{{- message.content }} </s><s>[INST]
+{%- endif %}
+{%- endfor %}
+{% endif %}

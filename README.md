@@ -11,8 +11,10 @@ The library is crafted to create best practices, production ready on Anthropic M
 - Support for Retrieval-Augmented Generation (RAG)
 - Support for Agent-based interactions
 - Support for Multi-Agent systems (in progress)
-- Support for creating workflows, nodes, and event-based systems (comming soon)
-- Support for image generated model and speech to text (STT), text to speech (TTS) (comming soon)
+- Support for creating workflows, nodes, and event-based systems (coming soon)
+- Support for image generated model and speech to text (STT), text to speech (TTS) (coming soon)
+- Performance monitoring for both asynchronous and synchronous functions
+- Logging functionality for tracking function calls, inputs, and outputs
 
 ## Installation
 
@@ -107,6 +109,40 @@ if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
 ```
+
+### Monitoring and Logging
+
+The `monitor`  decorators for monitoring the performance of both asynchronous and synchronous functions:
+
+```python
+from bedrock_llm.monitor import Monitor
+
+@monitor_async
+async def my_async_function():
+    # Your async function code here
+
+@monitor_sync
+def my_sync_function():
+    # Your sync function code here
+```
+
+The `log` decorators for logging function calls, inputs, and outputs:
+
+```python
+from bedrock_llm.monitor import Logging
+
+@log_async
+async def my_async_function():
+    # Your async function code here
+
+@log_sync
+def my_sync_function():
+    # Your sync function code here
+```
+
+These decorators are optimized for minimal performance impact on your application.
+
+### More examples
 
 For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/wiki).
 

@@ -1,0 +1,10 @@
+{% if SYSTEM %}{{ SYSTEM }}
+{% endif %}
+{% if REQUEST.content is defined %}User: {{ REQUEST.content }}
+Bot:
+
+{% elif REQUEST is iterable %}{% for message in REQUEST -%}
+{%- if message.role == "user" %}User: {{ message.content }}
+{%- elif message.role == "assistant" %}Bot: {{ message.content }}
+{% endif %}
+{% endfor %}Bot:{% endif %}

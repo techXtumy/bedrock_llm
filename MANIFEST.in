@@ -2,3 +2,4 @@ include README.md
 include requirements.txt
 recursive-include src *
 recursive-include tests *
+include src/bedrock_llm/templates/*.j2

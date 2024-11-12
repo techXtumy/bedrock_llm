@@ -37,6 +37,7 @@ src/bedrock_llm/models/__pycache__/meta.cpython-312.pyc
 src/bedrock_llm/models/__pycache__/mistral.cpython-312.pyc
 src/bedrock_llm/models/__pycache__/mistral_chat.cpython-312.pyc
 src/bedrock_llm/models/__pycache__/mistral_instruct.cpython-312.pyc
+src/bedrock_llm/monitor/__init__.py
 src/bedrock_llm/schema/__init__.py
 src/bedrock_llm/schema/cache.py
 src/bedrock_llm/schema/message.py
