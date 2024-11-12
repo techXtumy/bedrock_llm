@@ -1,20 +1,25 @@
-from typing import AsyncGenerator
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from .base import database
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
+app = FastAPI(title="REST API using FastAPI PostgreSQL Async EndPoints")
 
+# Middleware setup
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+app.add_middleware(GZipMiddleware)
 
-async def get_db_session(request: Request) -> AsyncGenerator[AsyncSession, None]:
-    """
-    Create and get database session.
+# Event handlers for connecting/disconnecting from the database
+@app.on_event("startup")
+async def startup():
+    await database.connect()
 
-    :param request: current request.
-    :yield: database session.
-    """
-    session: AsyncSession = request.app.state.db_session_factory()
-
-    try:
-        yield session
-    finally:
-        await session.commit()
-        await session.close()
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()

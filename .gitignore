@@ -8,3 +8,10 @@ src/bedrock_llm/schema/__pycache__
 src/bedrock_llm/types/__pycache__
 src/bedrock_llm/utils/__pycache__
 tests/__pycache__
+src/bedrock_be/__pycache__/__init__.cpython-312.pyc
+src/bedrock_be/db/__pycache__/base.cpython-312.pyc
+src/bedrock_be/db/__pycache__/main.cpython-312.pyc
+src/bedrock_be/db/__pycache__/meta.cpython-312.pyc
+src/bedrock_be/db/__pycache__/dependencies.cpython-312.pyc
+src/bedrock_be/db/models/__pycache__/__init__.cpython-312.pyc
+src/bedrock_be/db/models/__pycache__/schemas.cpython-312.pyc
