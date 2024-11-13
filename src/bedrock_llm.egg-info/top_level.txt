@@ -1,1 +1,2 @@
+bedrock_be
 bedrock_llm

@@ -1,6 +1,6 @@
 from typing import AsyncGenerator
 
-from redis.asyncio import Redis
+from redis.asyncio import Redis  # type: ignore
 from starlette.requests import Request
 
 

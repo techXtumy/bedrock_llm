@@ -1,5 +1,6 @@
+from typing import Any, Dict, List, Literal, Optional, Union
+
 from pydantic import BaseModel
-from typing import List, Literal, Dict, Any, Optional, Union
 
 from ..schema.cache import CacheControl
 
@@ -7,11 +8,11 @@ from ..schema.cache import CacheControl
 class UserMetadat(BaseModel):
     """
     An object describing metadata about the request.
-    
+
     Attributes:
-        user_id (str | None): An external identifier for the user who is associated with the request. 
-                    This should be a uuid, hash value, or other opaque identifier. 
-                    Anthropic may use this id to help detect abuse. 
+        user_id (str | None): An external identifier for the user who is associated with the request.
+                    This should be a uuid, hash value, or other opaque identifier.
+                    Anthropic may use this id to help detect abuse.
                     Do not include any identifying information such as name, email address, or phone number..
 
     Example:
@@ -19,11 +20,12 @@ class UserMetadat(BaseModel):
         ...     user_id="XXXXXXXX"
         ... )
     """
+
     user_id: Optional[str] = None
 
 
 class Image(BaseModel):
-    """ An image represented as base64 data.
+    """An image represented as base64 data.
 
     Attributes:
         type (Literal["base_64"]): The type of image, must be "base_64".
@@ -39,6 +41,7 @@ class Image(BaseModel):
 
     See more: https://docs.anthropic.com/en/docs/build-with-claude/vision#prompt-examples
     """
+
     type: Literal["base_64"]
     media_type: Literal["image/png", "image/jpeg", "image/gif", "image/webp"]
     data: str
@@ -49,7 +52,7 @@ class SystemBlock(BaseModel):
     System prompt.
 
     A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.
-    
+
     Attributes:
         cache_control (CacheControl | None): Controls caching behavior for the system prompt.
             Defaults to None.
@@ -62,16 +65,17 @@ class SystemBlock(BaseModel):
         ...     text="You are an expert in Python programming.",
         ...     cache_control=CacheControl("ephemeral")
         ... )
-    
+
     See more: https://docs.anthropic.com/en/docs/system-prompts
     """
+
     cache_control: Optional[CacheControl] = None
     type: Literal["text"]
     text: str
-   
-    
+
+
 class TextBlock(BaseModel):
-    """ Text block.
+    """Text block.
 
     Attributes:
         cache_control (CacheControl | None): Controls caching behavior for the text block.
@@ -86,18 +90,19 @@ class TextBlock(BaseModel):
         ...     cache_control=CacheControl("ephemeral")
         ... )
     """
+
     cache_control: Optional[CacheControl] = None
     type: Literal["text"]
     text: str
-    
+
     def model_dump(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump(**kwargs)
 
 
 class ImageBlock(BaseModel):
-    """ Image block.
+    """Image block.
 
     Attributes:
         cache_control (CacheControl | None): Controls caching behavior for the image block.
@@ -115,9 +120,10 @@ class ImageBlock(BaseModel):
         ...         data="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8A"
         ...     )
         ... )
-        
+
     See more: https://docs.anthropic.com/en/docs/build-with-claude/vision#prompt-examples
     """
+
     cache_control: Optional[CacheControl] = None
     type: Literal["image"]
     source: Image
@@ -143,15 +149,16 @@ class ToolUseBlock(BaseModel):
         ...     input={"key": "value"}
         ... )
     """
+
     cache_control: Optional[CacheControl] = None
     type: Literal["tool_use"]
     id: str
     name: str
     input: Dict
-    
+
     def model_dump(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump(**kwargs)
 
 
@@ -175,15 +182,16 @@ class ToolResultBlock(BaseModel):
         ...     content="The capital of France is Paris."
         ... )
     """
+
     cache_control: Optional[CacheControl] = None
     type: Literal["tool_result"]
     tool_use_id: str
     is_error: bool
     content: Union[TextBlock, ImageBlock, str]
-    
+
     def model_dump(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump(**kwargs)
 
 
@@ -202,10 +210,11 @@ class ToolCallBlock(BaseModel):
         ...     type="function",
         ...     function={"name": "tool_name", "arguments": {"key": "value"}}
         ... )
-        
+
     Read more on Mistral AI: https://docs.mistral.ai/api/#tag/agents/operation/agents_completion_v1_agents_completions_post
     Read more on Jamba AI21: https://docs.ai21.com/reference/jamba-15-api-ref
     """
+
     id: str
     type: Optional[str]
     function: Dict[str, Any]
@@ -214,10 +223,10 @@ class ToolCallBlock(BaseModel):
 class MessageBlock(BaseModel):
     """Input messages. **Only for Chat Model**
 
-    Our models are trained to operate on alternating user and assistant conversational turns. 
-    When creating a new Message, you specify the prior conversational turns with the messages parameter, 
-    and the model then generates the next Message in the conversation. 
-    Consecutive `user` or `assistant` turns in your request will be combined into a single turn. 
+    Our models are trained to operate on alternating user and assistant conversational turns.
+    When creating a new Message, you specify the prior conversational turns with the messages parameter,
+    and the model then generates the next Message in the conversation.
+    Consecutive `user` or `assistant` turns in your request will be combined into a single turn.
     The `tool` and `system` role turn is only for **Jamba Model (AI21)** and **Mistral Large Model**.
 
     Attributes:
@@ -229,7 +238,7 @@ class MessageBlock(BaseModel):
 
     Note:
         - For Anthropic model, use `ToolUseBlock` and `ToolResultBlock` inside the `content` instead of `tool_calls` and `tool_calls_id`.
-        
+
     Example:
         >>> message_block = MessageBlock(
         ...     role="user",
@@ -259,23 +268,28 @@ class MessageBlock(BaseModel):
         ...         )
         ...     ]
         ... )
-        
+
         See more for Jamaba Model: https://docs.ai21.com/reference/jamba-15-api-ref
     """
+
     role: Literal["user", "assistant", "tool", "system"]
-    content: Optional[Union[List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, List]], str]]
+    content: Optional[
+        Union[
+            List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, List]], str
+        ]
+    ]
     name: Optional[str] = None
     tool_calls: Optional[List[ToolCallBlock]] = None
     tool_call_id: Optional[str] = None
-    
+
     # Override model_dump to automatically exclude None and unset fields
     def model_dump(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump(**kwargs)
 
     # Override model_dump_json similarly
     def model_dump_json(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump_json(**kwargs)

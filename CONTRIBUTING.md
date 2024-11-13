@@ -6,7 +6,14 @@ We welcome contributions to the Bedrock LLM project! This document provides guid
 
 1. Fork the repository on GitHub.
 2. Clone your fork locally.
-3. Create a new branch for your contribution.
+3. Install pre-commit:
+   ```
+   pip install pre-commit
+   pre-commit install
+   ```
+4. Create a new branch for your contribution.
+
+Pre-commit will now run automatically on `git commit`.
 
 ## Making Changes
 

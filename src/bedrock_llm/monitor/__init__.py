@@ -1,39 +1,48 @@
-import time
-import psutil
-import pytz
 import logging
+import time
 from datetime import datetime
-from termcolor import cprint
 from functools import wraps
 
+import psutil
+import pytz  # type: ignore
+from termcolor import cprint
 
-def _get_performance_metrics(func, start_time, start_memory):
+start_time_perf = time.perf_counter()
+
+
+def _get_performance_metrics(func, start_datetime, start_memory):
     end_time = time.perf_counter()
     end_memory = psutil.Process().memory_info().rss / 1024 / 1024
-    execution_time = end_time - start_time
-    memory_used = end_memory - start_memory
-    
+    current_memory = psutil.Process().memory_info().rss / 1024 / 1024
+    memory_used = current_memory - start_memory
+
     return {
         "function": func.__name__,
-        "start_time": start_time,
-        "duration": execution_time,
-        "memory_used": memory_used
+        "start_time": start_datetime,
+        "duration": end_time - start_time_perf,  # Using the global variable
+        "memory_used": memory_used,
     }
 
+
 def _print_metrics(metrics):
-    cprint("\n" + "="*50, "blue")
+    cprint("\n" + "=" * 50, "blue")
     cprint(f"[Performance Metrics]", "blue")
     cprint(f"Function    : {metrics['function']}", "blue")
-    cprint(f"Start Time  : {metrics['start_time'].strftime('%Y-%m-%d %H:%M:%S %Z')}", "blue")
+    cprint(
+        f"Start Time  : {metrics['start_time'].strftime('%Y-%m-%d %H:%M:%S %Z')}",
+        "blue",
+    )
     cprint(f"Duration    : {metrics['duration']:.2f} seconds", "blue")
     cprint(f"Memory Used : {metrics['memory_used']:.2f} MB", "blue")
-    cprint("="*50, "blue")
+    cprint("=" * 50, "blue")
+
 
 def monitor_async(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        vietnam_tz = pytz.timezone('Asia/Ho_Chi_Minh')
-        start_time = time.perf_counter()
+        global start_time_perf  # Add global variable to track performance time
+        vietnam_tz = pytz.timezone("Asia/Ho_Chi_Minh")
+        start_time_perf = time.perf_counter()  # Store performance counter
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
         start_datetime = datetime.now(vietnam_tz)
 
@@ -44,18 +53,23 @@ def monitor_async(func):
             return result
         except Exception as e:
             end_time = time.perf_counter()
-            execution_time = end_time - start_time
-            cprint(f"\n[ERROR] {func.__name__} failed after {execution_time:.2f} seconds", "red")
+            execution_time = end_time - start_time_perf
+            cprint(
+                f"\n[ERROR] {func.__name__} failed after {execution_time:.2f} seconds",
+                "red",
+            )
             cprint(f"Error: {str(e)}", "red")
             raise e
 
     return wrapper
 
+
 def monitor_sync(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        vietnam_tz = pytz.timezone('Asia/Ho_Chi_Minh')
-        start_time = time.perf_counter()
+        global start_time_perf  # Add global variable to track performance time
+        vietnam_tz = pytz.timezone("Asia/Ho_Chi_Minh")
+        start_time_perf = time.perf_counter()  # Store performance counter
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
         start_datetime = datetime.now(vietnam_tz)
 
@@ -66,15 +80,23 @@ def monitor_sync(func):
             return result
         except Exception as e:
             end_time = time.perf_counter()
-            execution_time = end_time - start_time
-            cprint(f"\n[ERROR] {func.__name__} failed after {execution_time:.2f} seconds", "red")
+            execution_time = end_time - start_time_perf
+            cprint(
+                f"\n[ERROR] {func.__name__} failed after {execution_time:.2f} seconds",
+                "red",
+            )
             cprint(f"Error: {str(e)}", "red")
             raise e
 
     return wrapper
 
+
 def setup_logging():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
 
 def log_async(func):
     @wraps(func)
@@ -88,7 +110,9 @@ def log_async(func):
         except Exception as e:
             logger.error(f"{func.__name__} failed with error: {str(e)}")
             raise e
+
     return wrapper
+
 
 def log_sync(func):
     @wraps(func)
@@ -102,7 +126,9 @@ def log_sync(func):
         except Exception as e:
             logger.error(f"{func.__name__} failed with error: {str(e)}")
             raise e
+
     return wrapper
+
 
 # Setup logging when the module is imported
 setup_logging()

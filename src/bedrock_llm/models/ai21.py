@@ -1,6 +1,5 @@
 import json
-
-from typing import Any, AsyncGenerator, Tuple, List, Dict, Optional, Union
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 
 from ..models.base import BaseModelImplementation, ModelConfig
 from ..schema.message import MessageBlock, SystemBlock
@@ -9,14 +8,13 @@ from ..types.enums import StopReason
 
 
 class JambaImplementation(BaseModelImplementation):
-    
     def prepare_request(
-        self, 
-        config: ModelConfig, 
+        self,
+        config: ModelConfig,
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Prepare the request body for the AI21 API.
@@ -41,31 +39,25 @@ class JambaImplementation(BaseModelImplementation):
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
         messages = []
-        
+
         if tools:
-            raise ValueError("AI21 Jamba Model does not support tools. Please use another model.")
-        
-        if isinstance(prompt, str):
-            messages.append(
-                MessageBlock(
-                    role="user", 
-                    content=prompt
-                ).model_dump()
+            raise ValueError(
+                "AI21 Jamba Model does not support tools. Please use another model."
             )
+
+        if isinstance(prompt, str):
+            messages.append(MessageBlock(role="user", content=prompt).model_dump())
         elif isinstance(prompt, MessageBlock):
             messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
-        
+
         if system is not None:
             if isinstance(system, SystemBlock):
                 system = system.text
-            system = MessageBlock(
-                role="system",
-                content=system
-            ).model_dump()
+            system = MessageBlock(role="system", content=system).model_dump()
             messages.insert(0, system)
-        
+
         request_body = {
             "messages": messages,
             "max_tokens": config.max_tokens,
@@ -74,16 +66,16 @@ class JambaImplementation(BaseModelImplementation):
             "stop": config.stop_sequences,
             "n": config.number_of_responses,
         }
-        
+
         return request_body
-    
+
     async def prepare_request_async(
-        self, 
-        config: ModelConfig, 
+        self,
+        config: ModelConfig,
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Prepare the request body for the AI21 API.
@@ -106,31 +98,25 @@ class JambaImplementation(BaseModelImplementation):
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
         messages = []
-        
+
         if tools:
-            raise ValueError("Jamba Model currently does not support tools, please use other LLM")
-        
-        if isinstance(prompt, str):
-            messages.append(
-                MessageBlock(
-                    role="user", 
-                    content=prompt
-                ).model_dump()
+            raise ValueError(
+                "Jamba Model currently does not support tools, please use other LLM"
             )
+
+        if isinstance(prompt, str):
+            messages.append(MessageBlock(role="user", content=prompt).model_dump())
         elif isinstance(prompt, MessageBlock):
             messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
-        
+
         if system is not None:
             if isinstance(system, SystemBlock):
                 system = system.text
-            system = MessageBlock(
-                role="system",
-                content=system
-            ).model_dump()
+            system = MessageBlock(role="system", content=system).model_dump()
             messages.insert(0, system)
-        
+
         request_body = {
             "messages": messages,
             "max_tokens": config.max_tokens,
@@ -139,37 +125,31 @@ class JambaImplementation(BaseModelImplementation):
             "stop": config.stop_sequences,
             "n": config.number_of_responses,
         }
-            
+
         # Conditionally add tools if it is not None
         if tools is not None:
             if isinstance(tools, dict):
                 tools = [tools]
             request_body["tools"] = tools
-            
+
         return request_body
-       
+
     @staticmethod
     def _extract_chunk_data(chunk: dict) -> tuple[Optional[str], Optional[str]]:
         """Extract text content and stop reason from a chunk."""
         if not chunk.get("choices"):
             return None, None
-        
+
         choice = chunk["choices"][0]
-        return (
-            choice["delta"].get("content"),
-            choice.get("finish_reason")
-        )
-        
-    def parse_response(
-        self, 
-        response: Any
-    ) -> Tuple[MessageBlock, StopReason]:
+        return (choice["delta"].get("content"), choice.get("finish_reason"))
+
+    def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
         chunk = json.loads(response.read())
         chunk = chunk["choices"][0]
         message = MessageBlock(
             role=chunk["message"]["role"],
             content=chunk["message"]["content"].strip(),
-            tool_calls=chunk["message"].get("tool_calls", None)
+            tool_calls=chunk["message"].get("tool_calls", None),
         )
         if chunk.get("finish_reason") == "stop":
             stop_reason = StopReason.END_TURN
@@ -181,9 +161,10 @@ class JambaImplementation(BaseModelImplementation):
         return message, stop_reason
 
     async def parse_stream_response(
-        self,
-        stream: Any
-    ) -> AsyncGenerator[Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None]:
+        self, stream: Any
+    ) -> AsyncGenerator[
+        Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
+    ]:
         """
         Parse the response from the Bedrock API, handling both text content
         and tool call requests.
@@ -203,22 +184,24 @@ class JambaImplementation(BaseModelImplementation):
             try:
                 chunk = json.loads(event["chunk"]["bytes"])
                 text_chunk, stop_reason = self._extract_chunk_data(chunk)
-                
+
                 if stop_reason:
-                    message = MessageBlock(role="assistant", content="".join(full_answer).strip())
+                    message = MessageBlock(
+                        role="assistant", content="".join(full_answer).strip()
+                    )
                     if stop_reason == "stop":
                         yield None, StopReason.END_TURN, message
                     elif stop_reason == "length":
                         yield None, StopReason.MAX_TOKENS, message
                     break
-                
+
                 if not text_chunk:
                     continue
 
                 if not stop_reason:
                     yield text_chunk, None, None
                     full_answer.append(text_chunk)
-                    
+
             except Exception as e:
                 print(f"Unexpected error processing chunk: {str(e)}")
                 continue

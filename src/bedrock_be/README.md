@@ -69,12 +69,12 @@ bedrock_be
 This application can be configured with environment variables.
 
 You can create `.env` file in the root directory and place all
-environment variables here. 
+environment variables here.
 
 All environment variables should start with "BEDROCK_BE_" prefix.
 
 For example if you see in your "bedrock_be/settings.py" a variable named like
-`random_parameter`, you should provide the "BEDROCK_BE_RANDOM_PARAMETER" 
+`random_parameter`, you should provide the "BEDROCK_BE_RANDOM_PARAMETER"
 variable to configure the value. This behaviour can be changed by overriding `env_prefix` property
 in `bedrock_be.settings.Settings.Config`.
 

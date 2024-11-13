@@ -6,12 +6,8 @@ from fakeredis.aioredis import FakeConnection
 from fastapi import FastAPI
 from httpx import AsyncClient
 from redis.asyncio import ConnectionPool
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    async_sessionmaker, create_async_engine)
 
 from bedrock_be.db.dependencies import get_db_session
 from bedrock_be.db.utils import create_database, drop_database

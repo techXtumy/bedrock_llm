@@ -1,6 +1,6 @@
 # Bedrock LLM
 
-A Python library for building LLM applications using Amazon Bedrock Provider boto3 library. it aim to fast prototyping using variety of Foundation Model from Amazon Bedrock. It also aim to easy integration  Amazon Bedrock Foundation Model with other services. 
+A Python library for building LLM applications using Amazon Bedrock Provider boto3 library. it aim to fast prototyping using variety of Foundation Model from Amazon Bedrock. It also aim to easy integration  Amazon Bedrock Foundation Model with other services.
 
 The library is crafted to create best practices, production ready on Anthropic Model Family, Llama, Amazon Titan Text, MistralAI and AI21.
 
@@ -146,7 +146,7 @@ These decorators are optimized for minimal performance impact on your applicatio
 
 For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/wiki).
 
-You can also see some examples of how to use and build LLM flow using the libary 
+You can also see some examples of how to use and build LLM flow using the libary
 - [basic](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/1_basic.py)
 - [stream response](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/2_stream_response.py)
 - [all support llm](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/3_all_llm.py)

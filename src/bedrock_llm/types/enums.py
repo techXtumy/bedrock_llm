@@ -20,19 +20,19 @@ class ModelName(str, Enum):
     JAMBA_1_5_LARGE = "ai21.jamba-1-5-large-v1:0"
     MISTRAL_LARGE_2 = "mistral.mistral-large-2407-v1:0"
     MISTRAL_7B = "mistral.mistral-7b-instruct-v0:2"
-    
+
 
 class ToolChoiceEnum(Enum):
     AUTO = "auto"
     ANY = "any"
     NONE = "none"
-    
+
 
 class DescriptionFormat(Enum):
     NORMAL = "1"
     CLAUDE = "2"
     REACT = "3"
-    
+
 
 class StopReason(Enum):
     END_TURN = 1

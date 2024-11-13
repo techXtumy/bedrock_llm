@@ -1,9 +1,11 @@
 # models/schemas.py
 from pydantic import BaseModel
 
+
 class NoteIn(BaseModel):
     text: str
     completed: bool
+
 
 class Note(BaseModel):
     id: int
