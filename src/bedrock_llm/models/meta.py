@@ -1,7 +1,7 @@
 import json
 import os
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from typing import Any, AsyncGenerator, Optional, Tuple, List, Dict, Union
 
 from ..models.base import BaseModelImplementation, ModelConfig
@@ -20,7 +20,10 @@ class LlamaImplementation(BaseModelImplementation):
         system: Optional[str],
         tools: Optional[List[ToolMetadata]] = None
     ) -> str:
-        env = Environment(loader=FileSystemLoader(self.TEMPLATE_DIR))
+        env = Environment(
+            loader=FileSystemLoader(self.TEMPLATE_DIR), 
+            autoescape=select_autoescape(['html', 'xml', 'j2'])
+        )
         template = env.get_template("llama32_template.j2")
         prompt = template.render({"SYSTEM": system, "REQUEST": prompt, "TOOLS": tools})
         return prompt

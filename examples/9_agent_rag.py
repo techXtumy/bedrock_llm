@@ -76,8 +76,7 @@ async def knowledge_base_retrieve(query: str):
     }
     
     # Run boto3 call in a thread pool since it's blocking
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, lambda: runtime.retrieve(**kwargs))
+    result = await asyncio.run(None, lambda: runtime.retrieve(**kwargs))
     return build_context_kb_prompt(result)
 
 # Create a function for retrieve information on wikipedia

@@ -44,7 +44,6 @@ async def get_company_info(
     end_year: int, 
     company_type: Literal["corp", "inc", "llc"]
 ) -> str:
-    loop = asyncio.get_event_loop()
     def foo(company_name: str, 
             start_year: int, 
             end_year: int, 
@@ -98,7 +97,7 @@ async def get_company_info(
         # Join list into a single string
         return "\n".join(info)
     
-    return await loop.run_in_executor(
+    return await asyncio.run(
         None, foo, company_name, start_year, end_year, company_type)
 
 

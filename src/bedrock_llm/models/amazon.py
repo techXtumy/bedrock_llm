@@ -1,7 +1,7 @@
 import json
 import os
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from typing import Any, AsyncGenerator, Tuple, List, Dict, Union, Optional
 
 from ..models.base import BaseModelImplementation, ModelConfig
@@ -23,7 +23,10 @@ class TitanImplementation(BaseModelImplementation):
         prompt: Union[MessageBlock, List[Dict]], 
         system: Optional[str]
     ) -> str:
-        env = Environment(loader=FileSystemLoader(self.TEMPLATE_DIR))
+        env = Environment(
+            loader=FileSystemLoader(self.TEMPLATE_DIR), 
+            autoescape=select_autoescape(['html', 'xml', 'j2'])
+        )
         template = env.get_template("amazon_template.j2")
         return template.render({"SYSTEM": system, "REQUEST": prompt}).strip() + " "
     

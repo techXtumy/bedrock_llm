@@ -1,4 +1,5 @@
 import asyncio
+import json
 from functools import wraps
 
 from .client import LLMClient
@@ -121,7 +122,7 @@ class Agent(LLMClient):
                 )
             else:   # Process tool in Mistral AI, Jamaba Way
                 tool_name = tool.function
-                tool_params = eval(tool_name["arguments"])
+                tool_params = json.loads(tool_name["arguments"])
                 tool_data = self.tool_functions.get(tool_name["name"])
                 
                 if tool_data:

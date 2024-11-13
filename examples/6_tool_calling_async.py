@@ -1,9 +1,12 @@
 # Add for print console with color
+import json
 from termcolor import cprint
 
 from bedrock_llm import LLMClient, ModelName, MessageBlock, ModelConfig, RetryConfig
 from bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
 from bedrock_llm.types.enums import StopReason
+
+from typing import List
 
 
 system = "You are a helpful assistant. You have access to realtime information. You can use tools to get the real time data weather of a city."
@@ -56,14 +59,40 @@ async def get_weather(location: str):
     return f"tools_result: {location} is 20*C"
 
 
-async def call_tools(response: str):
-    reslt_list = []
-    tools_list = eval(response.strip("<|python_tag|>"))
-    for func in tools_list:
-        tool_result = await asyncio.wait_for(func, timeout=10)
-        reslt_list.append(str(tool_result))
-    return MessageBlock(role="user", content=". ".join(reslt_list))
+async def call_tools(response: str) -> List[str]:
+    result_list = []
+    
+    # Remove the tags and whitespace
+    cleaned_response = response.strip("<|python_tag|>").strip()
+    
+    try:
+        # Parse JSON instead of using eval()
+        tools_list = json.loads(cleaned_response)
+        
+        # Validate that tools_list is actually a list
+        if not isinstance(tools_list, list):
+            raise ValueError("Expected a list of tools")
+            
+        # Process each function
+        for func in tools_list:
+            # Add validation for func
+            if asyncio.iscoroutine(func):
+                try:
+                    tool_result = await asyncio.wait_for(func, timeout=10)
+                    result_list.append(str(tool_result))
+                except asyncio.TimeoutError:
+                    result_list.append("Tool execution timed out")
+                except Exception as e:
+                    result_list.append(f"Tool execution failed: {str(e)}")
+            else:
+                result_list.append("Invalid tool format")
+                
+    except json.JSONDecodeError:
+        result_list.append("Invalid JSON format in response")
+    except Exception as e:
+        result_list.append(f"Error processing tools: {str(e)}")
 
+    return result_list
 
 async def main():
     while True:
