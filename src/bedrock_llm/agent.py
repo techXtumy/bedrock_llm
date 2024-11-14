@@ -16,7 +16,7 @@ from .types.enums import ModelName, StopReason
 
 class Agent(LLMClient):
     tool_functions: Dict[str, Dict[str, Any]] = {}
-    _tool_cache: Dict[str, Any] = {}  # Add a manual cache
+    _tool_cache: Dict[str, Any] = {}
     _executor = ThreadPoolExecutor(max_workers=10)
 
     @classmethod
@@ -24,10 +24,8 @@ class Agent(LLMClient):
         """
         A decorator to register a function as a tool for the Agent.
         """
-        # Use the tool name as cache key instead of the whole metadata
-        cache_key = metadata.name
-
         def decorator(func):
+            cache_key = metadata.name
             if cache_key in cls._tool_cache:
                 return cls._tool_cache[cache_key]
 
@@ -42,15 +40,17 @@ class Agent(LLMClient):
             is_async = asyncio.iscoroutinefunction(func)
             wrapper = async_wrapper if is_async else sync_wrapper
 
-            cls.tool_functions[metadata.name] = {
+            tool_info = {
                 "function": wrapper,
                 "metadata": metadata.model_dump(),
                 "is_async": is_async,
             }
+            cls.tool_functions[metadata.name] = tool_info
+            cls._tool_cache[cache_key] = wrapper
 
-            # Cache the decorated function
-            cls._tool_cache[cache_key] = func
-            return func
+            return wrapper
+
+        return decorator
 
         return decorator
 

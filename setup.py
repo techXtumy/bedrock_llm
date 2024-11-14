@@ -15,7 +15,7 @@ setup(
     install_requires=requirements,
     author="Tran Quy An",
     author_email="an.tq@techxcorp.com",
-    description="A Python LLM framework for interacting with AWS Bedrock services. Build on top of boto3 library. This library serves as an fast prototyping, building POC, production ready.",
+    description="A Python LLM framework for interacting with AWS Bedrock services, built on top of boto3. This library serves as a comprehensive tool for fast prototyping, building POCs, and deploying production-ready LLM applications with robust infrastructure support.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Phicks-debug/bedrock_llm",

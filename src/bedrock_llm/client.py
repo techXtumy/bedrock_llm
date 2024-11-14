@@ -23,9 +23,7 @@ from .types.enums import ModelName, StopReason
 
 
 class LLMClient:
-    # Class-level cache for model implementations
     _model_implementations: Dict[ModelName, BaseModelImplementation] = {}
-    # Class-level connection pool
     _bedrock_clients: Dict[str, Any] = {}
 
     def __init__(
@@ -34,6 +32,7 @@ class LLMClient:
         model_name: ModelName,
         memory: Optional[List[MessageBlock]] = None,
         retry_config: Optional[RetryConfig] = None,
+        max_iterations: Optional[int] = None,
     ) -> None:
         self.region_name = region_name
         self.model_name = model_name
@@ -41,6 +40,20 @@ class LLMClient:
         self.bedrock_client = self._get_or_create_bedrock_client(region_name)
         self.model_implementation = self._get_or_create_model_implementation(model_name)
         self.memory = memory or []
+        self.max_iterations = max_iterations
+
+    @classmethod
+    def _get_or_create_bedrock_client(cls, region_name: str) -> Any:
+        """Get or create a cached Bedrock client for the region."""
+        if region_name not in cls._bedrock_clients:
+            config = Config(
+                retries={"max_attempts": 3, "mode": "standard"},
+                region_name=region_name,
+            )
+            cls._bedrock_clients[region_name] = boto3.client(
+                "bedrock-runtime", config=config
+            )
+        return cls._bedrock_clients[region_name]
 
     @classmethod
     def _get_or_create_bedrock_client(cls, region_name: str) -> Any:

@@ -1,20 +1,27 @@
 # Bedrock LLM
 
-A Python library for building LLM applications using Amazon Bedrock Provider boto3 library. it aim to fast prototyping using variety of Foundation Model from Amazon Bedrock. It also aim to easy integration  Amazon Bedrock Foundation Model with other services.
+A Python library for building LLM applications using Amazon Bedrock Provider and boto3 library. It aims to create best practices and production-ready solutions for various LLM models, including Anthropic, Llama, Amazon Titan, MistralAI, and AI21.
 
-The library is crafted to create best practices, production ready on Anthropic Model Family, Llama, Amazon Titan Text, MistralAI and AI21.
+The library is structured into two main components:
+1. `bedrock_be`: Infrastructure and services for deploying LLM applications.
+2. `bedrock_llm`: LLM orchestration and interaction logic.
+
+This structure allows for seamless integration of LLM capabilities with robust deployment and infrastructure management.
 
 ![Conceptual Architecture](/assests/bedrock_llm.png)
 
 ## Features
 
+- Support for multiple LLM models through Amazon Bedrock
+- Efficient LLM orchestration with `bedrock_llm`
+- Infrastructure and deployment services with `bedrock_be`
+- Agent-based interactions and tool calling
+- Asynchronous and synchronous function support
+- Performance monitoring and logging functionality
 - Support for Retrieval-Augmented Generation (RAG)
-- Support for Agent-based interactions
-- Support for Multi-Agent systems (in progress)
-- Support for creating workflows, nodes, and event-based systems (coming soon)
-- Support for image generated model and speech to text (STT), text to speech (TTS) (coming soon)
-- Performance monitoring for both asynchronous and synchronous functions
-- Logging functionality for tracking function calls, inputs, and outputs
+- Multi-Agent systems (in progress)
+- Workflows, nodes, and event-based systems (coming soon)
+- Image generation, speech-to-text (STT), and text-to-speech (TTS) support (coming soon)
 
 ## Installation
 
@@ -112,37 +119,41 @@ if __name__ == "__main__":
 
 ### Monitoring and Logging
 
-The `monitor`  decorators for monitoring the performance of both asynchronous and synchronous functions:
+Use the `monitor` decorators for performance monitoring:
 
 ```python
 from bedrock_llm.monitor import Monitor
 
-@monitor_async
+@Monitor.monitor_async
 async def my_async_function():
     # Your async function code here
 
-@monitor_sync
+@Monitor.monitor_sync
 def my_sync_function():
     # Your sync function code here
 ```
 
-The `log` decorators for logging function calls, inputs, and outputs:
+Use the `log` decorators for logging function calls:
 
 ```python
 from bedrock_llm.monitor import Logging
 
-@log_async
+@Logging.log_async
 async def my_async_function():
     # Your async function code here
 
-@log_sync
+@Logging.log_sync
 def my_sync_function():
     # Your sync function code here
 ```
 
 These decorators are optimized for minimal performance impact on your application.
 
-### More examples
+## Architecture
+
+For a detailed overview of the library's architecture, please see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Examples
 
 For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/wiki).
 

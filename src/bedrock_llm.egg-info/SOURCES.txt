@@ -95,6 +95,7 @@ src/bedrock_llm/schema/__pycache__/tools.cpython-312.pyc
 src/bedrock_llm/schema/__pycache__/tools.cpython-39.pyc
 src/bedrock_llm/templates/amazon_template.j2
 src/bedrock_llm/templates/llama32_template.j2
+src/bedrock_llm/templates/llama32_template_v2.j2
 src/bedrock_llm/templates/llama32_tool_format.j2
 src/bedrock_llm/templates/mistral7_template.j2
 src/bedrock_llm/types/__init__.py

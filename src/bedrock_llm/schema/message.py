@@ -275,7 +275,7 @@ class MessageBlock(BaseModel):
     role: Literal["user", "assistant", "tool", "system"]
     content: Optional[
         Union[
-            List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, List]], str
+            List[Union[TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, Dict]], str
         ]
     ]
     name: Optional[str] = None
