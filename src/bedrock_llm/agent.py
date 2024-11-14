@@ -24,6 +24,7 @@ class Agent(LLMClient):
         """
         A decorator to register a function as a tool for the Agent.
         """
+
         def decorator(func):
             cache_key = metadata.name
             if cache_key in cls._tool_cache:
