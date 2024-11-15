@@ -65,6 +65,7 @@ src/bedrock_llm/models/__pycache__/base.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/meta.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/mistral.cpython-311.pyc
 src/bedrock_llm/monitor/__init__.py
+src/bedrock_llm/monitor/__pycache__/__init__.cpython-311.pyc
 src/bedrock_llm/schema/__init__.py
 src/bedrock_llm/schema/cache.py
 src/bedrock_llm/schema/message.py

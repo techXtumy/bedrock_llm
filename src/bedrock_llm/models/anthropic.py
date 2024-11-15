@@ -1,3 +1,5 @@
+"""Anthropic model implementation."""
+
 import json
 from typing import (Any, AsyncGenerator, Coroutine, Dict, List, Optional,
                     Tuple, Union, cast)
@@ -68,15 +70,20 @@ class ClaudeImplementation(BaseModelImplementation):
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
         chunk = json.loads(response.read())
-        message = MessageBlock(role=chunk["role"], content=chunk["content"])
-        stop_reason = chunk["stop_reason"]
-        if stop_reason == "end_turn":
+        message = MessageBlock(
+            role=chunk["role"],
+            content=chunk["content"],
+            name=None,
+            tool_calls=None,
+            tool_call_id=None,
+        )
+        if chunk.get("stop_reason") == "end_turn":
             return message, StopReason.END_TURN
-        elif stop_reason == "stop_sequence":
+        elif chunk.get("stop_reason") == "stop_sequence":
             return message, StopReason.STOP_SEQUENCE
-        elif stop_reason == "max_token":
+        elif chunk.get("stop_reason") == "max_token":
             return message, StopReason.MAX_TOKENS
-        elif stop_reason == "tool_use":
+        elif chunk.get("stop_reason") == "tool_use":
             return message, StopReason.TOOL_USE
         return message, StopReason.ERROR
 

@@ -1,0 +1,21 @@
+<|begin_of_text|>{%- if SYSTEM %}<|start_header_id|>system<|end_header_id|>
+
+{{ SYSTEM }}{% if not TOOLS %}<|eot_id|>{% if REQUEST.content is defined %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% else %}<|start_header_id|>system<|end_header_id|>
+
+You are a helpful assistant.{% if not TOOLS %}<|eot_id|>{% if REQUEST.content is defined %}<|start_header_id|>user<|end_header_id|>{% endif %}{% endif %}{% endif %}{%- if TOOLS %}
+{% include 'llama32_tool_format.j2' %}<|eot_id|>{% if REQUEST.content is defined %}<|start_header_id|>user<|end_header_id|>{% endif %}
+{%- endif %}
+{%- if REQUEST.content is defined %}
+
+{{ REQUEST.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+{% elif REQUEST is iterable %}
+{%- for message in REQUEST %}
+{%- if message.role == "assistant" %}
+{{ message.content }}<|eot_id|>{%- elif message.role == "tool" %}<|start_header_id|>ipython<|end_header_id|>
+
+{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{%- elif message.role == "user" %}<|start_header_id|>user<|end_header_id|>
+
+{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{% endif %}{% endfor %}
+{% endif %}

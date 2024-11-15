@@ -1,3 +1,5 @@
+"""Base model implementation."""
+
 from abc import ABC, abstractmethod
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 
@@ -36,7 +38,7 @@ class BaseModelImplementation(ABC):
 
     @abstractmethod
     async def parse_stream_response(
-        self, response: Any
+        self, stream: Any
     ) -> AsyncGenerator[
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:

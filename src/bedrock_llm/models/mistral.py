@@ -13,14 +13,16 @@ from ..types.enums import StopReason, ToolChoiceEnum
 
 class MistralChatImplementation(BaseModelImplementation):
     """
-    Read more: https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-mistral-large-2407.html
+    Read more:
+    https://docs.aws.amazon.com/bedrock/latest/userguide
     """
 
     def _parse_tool_metadata(
         self, tool: Union[ToolMetadata, Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
-        Parse a ToolMetadata object or a dictionary into the format required by the Mistral model.
+        Parse a ToolMetadata object or a dictionary
+            into the format required by the Mistral model.
         """
 
         if isinstance(tool, dict):
@@ -55,16 +57,24 @@ class MistralChatImplementation(BaseModelImplementation):
             }
 
             if tool.input_schema:
-                for prop_name, prop_attr in tool.input_schema.properties.items():
-                    mistral_tool["function"]["parameters"]["properties"][prop_name] = {
-                        "type": prop_attr.type,
-                        "description": prop_attr.description,
+                # Convert properties Collection to a dictionary
+                properties = {}
+                for name, attr in tool.input_schema.properties.items():
+                    # Convert Pydantic model to dict
+                    attr_dict = attr.model_dump()
+                    properties[name] = {
+                        "type": attr_dict["type"],
+                        "description": attr_dict["description"]
                     }
 
-                if tool.input_schema.required:
-                    mistral_tool["function"]["parameters"][
-                        "required"
-                    ] = tool.input_schema.required
+                # Add properties to parameters
+                mistral_tool["function"]["parameters"]["properties"] = properties
+
+                # Convert required Collection to a list if it exists
+                if tool.input_schema.required is not None:
+                    mistral_tool["function"][
+                        "parameters"
+                    ]["required"] = list(tool.input_schema.required)
 
             return mistral_tool
 
@@ -78,63 +88,47 @@ class MistralChatImplementation(BaseModelImplementation):
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[
-            Union[List[ToolMetadata], List[Dict], ToolMetadata, Dict]
+            Union[List[ToolMetadata], List[Dict]]
         ] = None,
         tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs,
     ) -> Dict[str, Any]:
-        if tools and not isinstance(tools, (list, dict, ToolMetadata)):
-            raise ValueError(
-                "Tools must be a list, dictionary, or ToolMetadata object."
-            )
-
-        messages = []
-        if isinstance(prompt, str):
-            messages.append(MessageBlock(role="user", content=prompt).model_dump())
-        elif isinstance(prompt, MessageBlock):
-            messages.append(prompt.model_dump())
-        elif isinstance(prompt, list):
-            messages.extend(
-                [
-                    msg.model_dump() if isinstance(msg, MessageBlock) else msg
-                    for msg in prompt
-                ]
-            )
-
-        if system is not None:
-            system_content = system.text if isinstance(system, SystemBlock) else system
-            system_message = MessageBlock(
-                role="system", content=system_content
-            ).model_dump()
-            messages.insert(0, system_message)
-
-        request_body = {
-            "messages": messages,
+        request_body: Dict[str, Any] = {
             "max_tokens": config.max_tokens,
             "temperature": config.temperature,
             "top_p": config.top_p,
+            "stop_sequences": config.stop_sequences if config.stop_sequences else [],
+            "messages": [],
         }
 
-        if tools is not None:
-            if isinstance(tools, (dict, ToolMetadata)):
-                parsed_tools = [self._parse_tool_metadata(tools)]
-            elif isinstance(tools, list):
-                parsed_tools = []
-                for tool in tools:
-                    if isinstance(tool, (dict, ToolMetadata)):
-                        parsed_tools.append(self._parse_tool_metadata(tool))
-                    else:
-                        raise ValueError(
-                            f"Unsupported tool type in list: {type(tool)}. Expected Dict or ToolMetadata."
-                        )
-            else:
-                raise ValueError(
-                    f"Unsupported tools type: {type(tools)}. Expected List, Dict, or ToolMetadata."
-                )
-            request_body["tools"] = parsed_tools
+        if system:
+            if isinstance(system, SystemBlock):
+                system = system.text
+            request_body["messages"] = [
+                {"role": "system", "content": system}
+            ] + request_body["messages"]
 
-        if tool_choice is not None:
-            request_body["tool_choice"] = tool_choice
+        if isinstance(prompt, str):
+            request_body["messages"] = request_body["messages"] + [
+                {"role": "user", "content": prompt}
+            ]
+        elif isinstance(prompt, MessageBlock):
+            request_body["messages"] = request_body["messages"] + [
+                {"role": prompt.role, "content": prompt.content}
+            ]
+        elif isinstance(prompt, list):
+            messages = []
+            for msg in prompt:
+                if isinstance(msg, dict):
+                    messages.append(msg)
+                elif isinstance(msg, MessageBlock):
+                    messages.append({"role": msg.role, "content": msg.content})
+            request_body["messages"] = request_body["messages"] + messages
+
+        if tools:
+            request_body["tools"] = [self._parse_tool_metadata(tool) for tool in tools]
+            if tool_choice is not None:
+                request_body["tool_choice"] = tool_choice.value
 
         return request_body
 
@@ -144,7 +138,7 @@ class MistralChatImplementation(BaseModelImplementation):
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[
-            Union[List[ToolMetadata], List[Dict], ToolMetadata, Dict]
+            Union[List[ToolMetadata], List[Dict]]
         ] = None,
         tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs,
@@ -182,22 +176,21 @@ class MistralChatImplementation(BaseModelImplementation):
 
         # Conditionally add tools and tool_choice if they are not None
         if tools is not None:
-            if isinstance(tools, (dict, ToolMetadata)):
-                parsed_tools = [self._parse_tool_metadata(tools)]
-            elif isinstance(tools, list):
-                parsed_tools = []
-                for tool in tools:
-                    if isinstance(tool, (dict, ToolMetadata)):
-                        parsed_tools.append(self._parse_tool_metadata(tool))
-                    else:
-                        raise ValueError(
-                            f"Unsupported tool type in list: {type(tool)}. Expected Dict or ToolMetadata."
-                        )
-            else:
-                raise ValueError(
-                    f"Unsupported tools type: {type(tools)}. Expected List, Dict, or ToolMetadata."
-                )
-            request_body["tools"] = parsed_tools
+            parsed_tools = []
+            for tool in tools:
+                if isinstance(tool, (dict, ToolMetadata)):
+                    parsed_tools.append(self._parse_tool_metadata(tool))
+                else:
+                    raise ValueError(
+                        f"""Unsupported tool type in list: {type(tool)}.
+                        Expected Dict or ToolMetadata."""
+                    )
+        else:
+            raise ValueError(
+                f"""Unsupported tools type: {type(tools)}.
+                    Expected List of ToolMetadata."""
+            )
+        request_body["tools"] = parsed_tools
         return request_body
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
@@ -231,7 +224,7 @@ class MistralChatImplementation(BaseModelImplementation):
     ) -> AsyncGenerator[
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
-        full_response = []
+        full_response: List[str] = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["choices"][0]
@@ -306,6 +299,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
+        tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         if tools:
@@ -335,6 +329,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         prompt: Union[str, MessageBlock, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
+        tool_choice: Optional[ToolChoiceEnum] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         if tools:
@@ -371,7 +366,7 @@ class MistralInstructImplementation(BaseModelImplementation):
     ) -> AsyncGenerator[
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
-        full_response = []
+        full_response: List[str] = []
         for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["outputs"][0]

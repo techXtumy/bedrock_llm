@@ -1,3 +1,4 @@
+"""LLM client implementation."""
 import asyncio
 import json
 from functools import lru_cache
@@ -33,14 +34,14 @@ class LLMClient:
         memory: Optional[List[MessageBlock]] = None,
         retry_config: Optional[RetryConfig] = None,
         max_iterations: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         self.region_name = region_name
         self.model_name = model_name
         self.retry_config = retry_config or RetryConfig()
         self.bedrock_client = self._get_or_create_bedrock_client(region_name, **kwargs)
         self.model_implementation = self._get_or_create_model_implementation(model_name)
-        self.memory = memory or []
+        self.memory = memory
         self.max_iterations = max_iterations
 
     @classmethod
@@ -53,13 +54,14 @@ class LLMClient:
                 max_pool_connections=50,
                 tcp_keepalive=True,
             )
-            profile_name = kwargs.pop('profile_name', None)
-            session = boto3.Session(profile_name=profile_name) if profile_name else boto3.Session()
+            profile_name = kwargs.pop("profile_name", None)
+            session = (
+                boto3.Session(profile_name=profile_name)
+                if profile_name
+                else boto3.Session()
+            )
             cls._bedrock_clients[cache_key] = session.client(
-                "bedrock-runtime",
-                region_name=region_name,
-                config=config,
-                **kwargs
+                "bedrock-runtime", region_name=region_name, config=config, **kwargs
             )
         return cls._bedrock_clients[cache_key]
 
@@ -90,17 +92,27 @@ class LLMClient:
             cls._model_implementations[model_name] = implementations[model_name]
         return cls._model_implementations[model_name]
 
-    # Don't need caching since the method is handle mutable data structures (lists).
     def _process_prompt(
         self,
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         auto_update_memory: bool,
     ) -> Union[str, MessageBlock, List[Dict[Any, Any]]]:
-        """Process and validate the prompt."""
+        """Process and validate the prompt.
+
+        Args:
+            prompt: Input prompt as string, MessageBlock, or list of MessageBlocks
+            auto_update_memory: Whether to update memory automatically
+
+        Returns:
+            Processed prompt in appropriate format for model
+
+        Raises:
+            ValueError: If memory is set and prompt is a string
+        """
         if self.memory is not None and auto_update_memory:
             if isinstance(prompt, str):
                 raise ValueError(
-                    "If memory is set, prompt must be a MessageBlock or list of MessageBlock"
+                    "Prompt must be MessageBlock or list when memory is enabled"
                 )
             if isinstance(prompt, MessageBlock):
                 self.memory.append(prompt.model_dump())
@@ -116,12 +128,17 @@ class LLMClient:
         return prompt
 
     async def _handle_retry_logic(self, operation, *args, **kwargs):
-        """Centralized retry logic for both sync and async operations."""
+        """Handle retry logic for async operations."""
         for attempt in range(self.retry_config.max_retries):
             try:
                 # If operation is a coroutine function
-                result = await operation(*args, **kwargs)
-                return result  # Return the result directly instead of yielding
+                if asyncio.iscoroutinefunction(operation):
+                    async for result in await operation(*args, **kwargs):
+                        yield result
+                else:
+                    async for result in operation(*args, **kwargs):
+                        yield result
+                return
             except (ReadTimeoutError, ClientError) as e:
                 if attempt < self.retry_config.max_retries - 1:
                     delay = self.retry_config.retry_delay * (
@@ -227,9 +244,11 @@ class LLMClient:
 
             response = await self._invoke_model_stream(request_body)
 
-            async for token, stop_reason, response_msg in self.model_implementation.parse_stream_response(
-                response["body"]
-            ):
+            async for (
+                token,
+                stop_reason,
+                response_msg,
+            ) in self.model_implementation.parse_stream_response(response["body"]):
                 if (
                     self.memory is not None
                     and auto_update_memory
@@ -242,7 +261,7 @@ class LLMClient:
         try:
             async for result in _generate_stream():
                 yield result
-        except Exception as e:
+        except Exception:
             # Wrap the generator in retry logic only if there's an error
             async for result in self._handle_retry_logic(_generate_stream):
                 yield result

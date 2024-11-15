@@ -3,6 +3,7 @@
 A Python library for building LLM applications using Amazon Bedrock Provider and boto3 library. It aims to create best practices and production-ready solutions for various LLM models, including Anthropic, Llama, Amazon Titan, MistralAI, and AI21.
 
 The library is structured into two main components:
+
 1. `bedrock_be`: Infrastructure and services for deploying LLM applications.
 2. `bedrock_llm`: LLM orchestration and interaction logic.
 
@@ -38,34 +39,38 @@ This library requires Python 3.9 or later.
 Before using the library, make sure you have your AWS credentials properly configured:
 
 1. Create or update your AWS credentials file at `~/.aws/credentials`:
-```ini
-[bedrock]
-aws_access_key_id = YOUR_ACCESS_KEY
-aws_secret_access_key = YOUR_SECRET_KEY
-```
+
+    ```ini
+    [bedrock]
+    aws_access_key_id = YOUR_ACCESS_KEY
+    aws_secret_access_key = YOUR_SECRET_KEY
+    ```
 
 2. Create or update your AWS config file at `~/.aws/config`:
-```ini
-[profile bedrock]
-region = us-east-1
-```
+
+    ```ini
+    [profile bedrock]
+    region = us-east-1
+    ```
 
 3. When initializing the client, specify the profile name:
-```python
-from bedrock_llm import LLMClient, ModelName, ModelConfig
 
-# Create a LLM client with specific AWS profile
-client = LLMClient(
-    region_name="us-east-1",
-    model_name=ModelName.MISTRAL_7B,
-    profile_name="bedrock"  # Specify your AWS profile name
-)
-```
+    ```python
+    from bedrock_llm import LLMClient, ModelName, ModelConfig
 
-You can verify your credentials by running:
-```bash
-aws bedrock list-foundation-models --profile bedrock
-```
+    # Create a LLM client with specific AWS profile
+    client = LLMClient(
+        region_name="us-east-1",
+        model_name=ModelName.MISTRAL_7B,
+        profile_name="bedrock"  # Specify your AWS profile name
+    )
+    ```
+
+    You can verify your credentials by running:
+
+    ```bash
+    aws bedrock list-foundation-models --profile bedrock
+    ```
 
 ## Usage
 
@@ -192,6 +197,7 @@ For a detailed overview of the library's architecture, please see [ARCHITECTURE.
 For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/wiki).
 
 You can also see some examples of how to use and build LLM flow using the libary
+
 - [basic](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/1_basic.py)
 - [stream response](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/2_stream_response.py)
 - [all support llm](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/3_all_llm.py)

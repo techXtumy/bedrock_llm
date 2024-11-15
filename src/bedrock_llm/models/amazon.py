@@ -11,10 +11,6 @@ from ..types.enums import StopReason
 
 
 class TitanImplementation(BaseModelImplementation):
-    """
-    Read more: https://d2eo22ngex1n9g.cloudfront.net/Documentation/User+Guides/Titan/Amazon+Titan+Text+Prompt+Engineering+Guidelines.pdf
-    """
-
     # Determine the absolute path to the templates directory
     TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "../templates")
 
@@ -38,7 +34,10 @@ class TitanImplementation(BaseModelImplementation):
     ) -> Dict[str, Any]:
         if tools:
             raise ValueError(
-                "Amazon Titan models do not support function calling and tools. Please use another model."
+                """
+                Amazon Titan models do not support function calling and tools.
+                Please use another model.
+                """
             )
 
         if isinstance(system, SystemBlock):
@@ -70,7 +69,10 @@ class TitanImplementation(BaseModelImplementation):
     ) -> Dict[str, Any]:
         if tools:
             raise ValueError(
-                "Titan models are not support function callings and tools. Please use another models"
+                """
+                Titan models are not support function callings and tools.
+                Please use another models
+                """
             )
 
         if isinstance(system, SystemBlock):
@@ -92,7 +94,11 @@ class TitanImplementation(BaseModelImplementation):
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
         chunk = json.loads(response.read())
         message = MessageBlock(
-            role="assistant", content=chunk["results"][0]["outputText"]
+            role="assistant",
+            content=chunk["results"][0]["outputText"],
+            name=None,
+            tool_calls=None,
+            tool_call_id=None,
         )
         if chunk["results"][0]["completionReason"] == "FINISH":
             return message, StopReason.END_TURN

@@ -33,8 +33,8 @@ class JambaImplementation(BaseModelImplementation):
         Raises:
             ValueError: If the prompt is not a string or a list of dictionaries.
             ValueError: If the instruction is not a string.
-            ValueError: If tools are provided (not supported by Jamba Model).
-            ValueError: If documents are provided (not supported in the request payload).
+            ValueError: If tools are provided (not supported).
+            ValueError: If documents are provided (not supported).
 
         See more: https://docs.ai21.com/docs/prompt-engineering
         """
@@ -147,9 +147,11 @@ class JambaImplementation(BaseModelImplementation):
         chunk = json.loads(response.read())
         chunk = chunk["choices"][0]
         message = MessageBlock(
-            role=chunk["message"]["role"],
+            role="assistant",
             content=chunk["message"]["content"].strip(),
             tool_calls=chunk["message"].get("tool_calls", None),
+            name=None,
+            tool_call_id=None,
         )
         if chunk.get("finish_reason") == "stop":
             stop_reason = StopReason.END_TURN
@@ -175,9 +177,9 @@ class JambaImplementation(BaseModelImplementation):
         Yields:
             Tuple containing either:
             - (str, None): Regular text chunks
-            - (MessageBlock, str): Final message with optional tool calls and stop reason
+            - (MessageBlock, str): Final message(optional tool calls), stop reason
         """
-        full_answer = []
+        full_answer: List[str] = []
 
         for event in stream:
             # yield event, None

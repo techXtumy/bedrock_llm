@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import FastAPI, status
+from fastapi import status
 
 from bedrock_be.db.base import database
 from bedrock_be.db.dependencies import app

@@ -1,9 +1,11 @@
+"""Meta model implementation."""
+
 import json
 import os
 from typing import (Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple,
                     Union)
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader
 
 from ..models.base import (BaseModelImplementation, MessageBlock, ModelConfig,
                            StopReason, SystemBlock)

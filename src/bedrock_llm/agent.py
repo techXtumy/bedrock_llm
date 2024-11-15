@@ -1,3 +1,5 @@
+"""Agent implementation."""
+
 import asyncio
 import json
 from concurrent.futures import ThreadPoolExecutor
@@ -59,9 +61,9 @@ class Agent(LLMClient):
         model_name: ModelName,
         max_iterations: Optional[int] = 5,
         retry_config: Optional[RetryConfig] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
-        super(LLMClient, self).__init__(region_name, model_name, [], retry_config, **kwargs)
+        super().__init__(region_name, model_name, [], retry_config, **kwargs)
         self.max_iterations = max_iterations
 
     async def __execute_tool(
@@ -191,8 +193,10 @@ class Agent(LLMClient):
                     if not response:
                         raise Exception(
                             "No tool call request from the model. "
-                            "Error from API bedrock when the model is not return a valid "
-                            "tool response, but still return StopReason as TOOLUSE request."
+                            "Error from API bedrock when "
+                            "the model is not return a valid "
+                            "tool response, but still return "
+                            "StopReason as TOOLUSE request."
                         )
 
                     tool_content = (
