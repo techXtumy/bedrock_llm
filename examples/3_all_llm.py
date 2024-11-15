@@ -22,7 +22,7 @@ async def main():
         ModelName.LLAMA_3_2_90B,
     ]:
         llama_client = LLMClient(
-            region_name="us-west-2", model_name=model, retry_config=retry_config
+            region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
         async for token, stop_reason, message in llama_client.generate_async(
@@ -40,7 +40,7 @@ async def main():
         ModelName.TITAN_PREMIER,
     ]:
         titan_client = LLMClient(
-            region_name="us-east-1", model_name=model, retry_config=retry_config
+            region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
         async for token, stop_reason, message in titan_client.generate_async(
@@ -58,7 +58,7 @@ async def main():
         ModelName.CLAUDE_3_5_SONNET,
     ]:
         claude_client = LLMClient(
-            region_name="us-east-1", model_name=model, retry_config=retry_config
+            region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
         async for token, stop_reason, message in claude_client.generate_async(
@@ -73,7 +73,7 @@ async def main():
     # # Using Jamba model
     for model in [ModelName.JAMBA_1_5_MINI, ModelName.JAMBA_1_5_LARGE]:
         jamba_client = LLMClient(
-            region_name="us-east-1", model_name=model, retry_config=retry_config
+            region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
         async for token, stop_reason, message in jamba_client.generate_async(
@@ -90,6 +90,7 @@ async def main():
         region_name="us-west-2",
         model_name=ModelName.MISTRAL_7B,
         retry_config=retry_config,
+        profile_name="bedrock"
     )
     print("Model: ", ModelName.MISTRAL_7B)
     async for token, stop_reason, message in mistral_client.generate_async(
@@ -105,6 +106,7 @@ async def main():
         region_name="us-west-2",
         model_name=ModelName.MISTRAL_LARGE_2,
         retry_config=retry_config,
+        profile_name="bedrock"
     )
     print("Model: ", ModelName.MISTRAL_LARGE_2)
     async for token, stop_reason, message in mistral_client.generate_async(

@@ -19,6 +19,7 @@ agent = Agent(
     region_name="us-west-2",
     model_name=ModelName.MISTRAL_LARGE_2,
     retry_config=RetryConfig(max_attempts=3),
+    profile_name="bedrock"
 )
 
 # Create a configuration for inference parameters

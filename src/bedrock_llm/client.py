@@ -33,43 +33,35 @@ class LLMClient:
         memory: Optional[List[MessageBlock]] = None,
         retry_config: Optional[RetryConfig] = None,
         max_iterations: Optional[int] = None,
+        **kwargs
     ) -> None:
         self.region_name = region_name
         self.model_name = model_name
         self.retry_config = retry_config or RetryConfig()
-        self.bedrock_client = self._get_or_create_bedrock_client(region_name)
+        self.bedrock_client = self._get_or_create_bedrock_client(region_name, **kwargs)
         self.model_implementation = self._get_or_create_model_implementation(model_name)
         self.memory = memory or []
         self.max_iterations = max_iterations
 
     @classmethod
-    def _get_or_create_bedrock_client(cls, region_name: str) -> Any:
+    def _get_or_create_bedrock_client(cls, region_name: str, **kwargs) -> Any:
         """Get or create a cached Bedrock client for the region."""
-        if region_name not in cls._bedrock_clients:
-            config = Config(
-                retries={"max_attempts": 3, "mode": "standard"},
-                region_name=region_name,
-            )
-            cls._bedrock_clients[region_name] = boto3.client(
-                "bedrock-runtime", config=config
-            )
-        return cls._bedrock_clients[region_name]
-
-    @classmethod
-    def _get_or_create_bedrock_client(cls, region_name: str) -> Any:
-        """Get or create a cached Bedrock client for the region."""
-        if region_name not in cls._bedrock_clients:
+        cache_key = f"{region_name}_{hash(frozenset(kwargs.items()))}"
+        if cache_key not in cls._bedrock_clients:
             config = Config(
                 retries={"max_attempts": 3, "mode": "standard"},
                 max_pool_connections=50,
                 tcp_keepalive=True,
             )
-            cls._bedrock_clients[region_name] = boto3.client(
+            profile_name = kwargs.pop('profile_name', None)
+            session = boto3.Session(profile_name=profile_name) if profile_name else boto3.Session()
+            cls._bedrock_clients[cache_key] = session.client(
                 "bedrock-runtime",
                 region_name=region_name,
                 config=config,
+                **kwargs
             )
-        return cls._bedrock_clients[region_name]
+        return cls._bedrock_clients[cache_key]
 
     @classmethod
     @lru_cache(maxsize=32)

@@ -27,10 +27,44 @@ This structure allows for seamless integration of LLM capabilities with robust d
 
 You can install the Bedrock LLM library using pip:
 
-```
+```bash
 pip install bedrock-llm
+```
 
 This library requires Python 3.9 or later.
+
+## AWS Credentials Setup
+
+Before using the library, make sure you have your AWS credentials properly configured:
+
+1. Create or update your AWS credentials file at `~/.aws/credentials`:
+```ini
+[bedrock]
+aws_access_key_id = YOUR_ACCESS_KEY
+aws_secret_access_key = YOUR_SECRET_KEY
+```
+
+2. Create or update your AWS config file at `~/.aws/config`:
+```ini
+[profile bedrock]
+region = us-east-1
+```
+
+3. When initializing the client, specify the profile name:
+```python
+from bedrock_llm import LLMClient, ModelName, ModelConfig
+
+# Create a LLM client with specific AWS profile
+client = LLMClient(
+    region_name="us-east-1",
+    model_name=ModelName.MISTRAL_7B,
+    profile_name="bedrock"  # Specify your AWS profile name
+)
+```
+
+You can verify your credentials by running:
+```bash
+aws bedrock list-foundation-models --profile bedrock
 ```
 
 ## Usage

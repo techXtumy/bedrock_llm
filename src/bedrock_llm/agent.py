@@ -53,16 +53,15 @@ class Agent(LLMClient):
 
         return decorator
 
-        return decorator
-
     def __init__(
         self,
         region_name: str,
         model_name: ModelName,
         max_iterations: Optional[int] = 5,
         retry_config: Optional[RetryConfig] = None,
+        **kwargs
     ) -> None:
-        super().__init__(region_name, model_name, [], retry_config)
+        super(LLMClient, self).__init__(region_name, model_name, [], retry_config, **kwargs)
         self.max_iterations = max_iterations
 
     async def __execute_tool(
