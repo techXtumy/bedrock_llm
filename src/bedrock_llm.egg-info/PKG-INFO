@@ -2,9 +2,9 @@ Metadata-Version: 2.1
 Name: bedrock_llm
 Version: 0.1.6
 Summary: A Python LLM framework for interacting with AWS Bedrock services, built on top of boto3. This library serves as a comprehensive tool for fast prototyping, building POCs, and deploying production-ready LLM applications with robust infrastructure support.
-Home-page: https://github.com/Phicks-debug/bedrock_llm
+Home-page: <https://github.com/Phicks-debug/bedrock_llm>
 Author: Tran Quy An
-Author-email: an.tq@techxcorp.com
+Author-email: <an.tq@techxcorp.com>
 Keywords: aws bedrock llm machine-learning ai
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
