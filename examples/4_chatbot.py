@@ -69,7 +69,7 @@ async def chat_with_claude():
 async def chat_with_llama():
     # Initialize the client
     client = LLMClient(
-        region_name="us-west-2",
+        region_name="us-east-1",
         model_name=ModelName.LLAMA_3_2_90B,
         memory=[],
         retry_config=RetryConfig(max_retries=3, retry_delay=1.0),

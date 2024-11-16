@@ -63,10 +63,9 @@ async def main():
             cprint(f"\n{tool_result}", "yellow")
 
         if stop_reason == StopReason.TOOL_USE:
-            for x in range(1, len(response.content)):
-                cprint(
-                    f"\n{response.content[x].model_dump()}", "cyan", end="", flush=True
-                )
+            cprint(
+                f"\n{response.content}", "cyan", end="", flush=True
+            )
             cprint(f"\n{stop_reason}", "red")
         elif stop_reason:
             cprint(f"\n{stop_reason}", "red")

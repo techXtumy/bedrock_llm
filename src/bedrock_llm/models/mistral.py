@@ -185,12 +185,8 @@ class MistralChatImplementation(BaseModelImplementation):
                         f"""Unsupported tool type in list: {type(tool)}.
                         Expected Dict or ToolMetadata."""
                     )
-        else:
-            raise ValueError(
-                f"""Unsupported tools type: {type(tools)}.
-                    Expected List of ToolMetadata."""
-            )
-        request_body["tools"] = parsed_tools
+
+            request_body["tools"] = parsed_tools
         return request_body
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:

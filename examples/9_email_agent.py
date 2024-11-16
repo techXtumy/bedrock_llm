@@ -104,7 +104,7 @@ async def main():
 
     # Create user prompt
     prompt = MessageBlock(
-        role="user", content="Can you you send an email to my colleage 'khue.le@techxcorp.com' to ask him when he can finish the function in python that I asked him to it."
+        role="user", content="Can you you send an email to my colleage 'mineran2003@gmail.com' to ask him when he can finish the function in python that I asked him to it."
     )
 
     # Invoke the model and get results

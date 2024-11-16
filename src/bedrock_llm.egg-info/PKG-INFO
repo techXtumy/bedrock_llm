@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: bedrock_llm
-Version: 0.1.5
+Version: 0.1.6
 Summary: A Python LLM framework for interacting with AWS Bedrock services, built on top of boto3. This library serves as a comprehensive tool for fast prototyping, building POCs, and deploying production-ready LLM applications with robust infrastructure support.
 Home-page: https://github.com/Phicks-debug/bedrock_llm
 Author: Tran Quy An
@@ -48,7 +48,12 @@ This structure allows for seamless integration of LLM capabilities with robust d
 - Support for multiple LLM models through Amazon Bedrock
 - Efficient LLM orchestration with `bedrock_llm`
 - Infrastructure and deployment services with `bedrock_be`
-- Agent-based interactions and tool calling
+- Enhanced Agent-based interactions with:
+  - Robust tool validation and execution
+  - Comprehensive error handling and logging
+  - Configurable memory management
+  - Type-safe responses with `AgentResponse`
+  - Support for multiple LLM tool-calling conventions (Claude, Llama, Mistral, etc.)
 - Asynchronous and synchronous function support
 - Performance monitoring and logging functionality
 - Support for Retrieval-Augmented Generation (RAG)
@@ -188,7 +193,83 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-### Monitoring and Logging
+### Agent Features
+
+The Agent class in `bedrock_llm` provides powerful capabilities for building LLM-powered applications:
+
+#### Tool Management
+
+```python
+from bedrock_llm import Agent, ToolMetadata
+from typing import Dict
+
+# Define a tool with metadata
+@Agent.tool(
+    metadata=ToolMetadata(
+        name="search",
+        description="Search for information",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query"}
+            },
+            "required": ["query"]
+        }
+    )
+)
+async def search(query: str) -> Dict:
+    # Tool implementation
+    pass
+```
+
+#### Error Handling
+
+The library provides comprehensive error handling with custom exceptions:
+
+```python
+try:
+    result = await agent.generate_and_action_async(
+        prompt="Search for Python tutorials",
+        tools=["search"]
+    )
+except ToolExecutionError as e:
+    print(f"Tool '{e.tool_name}' failed: {e.message}")
+    if e.original_error:
+        print(f"Original error: {e.original_error}")
+```
+
+#### Memory Management
+
+Configure memory limits to manage conversation history:
+
+```python
+agent = Agent(
+    region_name="us-west-2",
+    model_name=ModelName.ANTHROPIC_CLAUDE_V2,
+    memory_limit=100  # Keep last 100 messages
+)
+```
+
+#### Type-Safe Responses
+
+The library now provides type-safe responses using TypedDict:
+
+```python
+async for response in agent.generate_and_action_async(...):
+    token: Optional[str] = response["token"]
+    stop_reason: Optional[StopReason] = response["stop_reason"]
+    message: Optional[MessageBlock] = response["message"]
+    tool_results: Optional[List] = response["tool_results"]
+```
+
+#### Tool States
+
+Support for different LLM tool-calling conventions:
+
+- Claude/Llama style: Uses ToolUseBlock for tool execution
+- Mistral/Jamba style: Uses ToolCallBlock for function calling
+
+## Monitoring and Logging
 
 Use the `monitor` decorators for performance monitoring:
 
@@ -241,11 +322,20 @@ and more to come, we are working on it :)
 
 ## Requirements
 
-- Python 3.9+
-- pydantic>=2.0.0
-- boto3>=1.18.0
-- botocore>=1.21.0
-- jinja>=3.1.4
+python>=3.9
+pydantic>=2.0.0
+boto3>=1.18.0
+botocore>=1.21.0
+jinja2>=3.1.2
+psutil>=5.9.0
+pytz>=2023.3
+termcolor>=2.3.0
+databases[postgresql]>=0.7.0
+sqlalchemy>=2.0.0
+asyncpg>=0.27.0  # PostgreSQL async driver
+types-redis>=4.6.0
+types-pytz
+rx==3.2.0
 
 ## Contributing
 

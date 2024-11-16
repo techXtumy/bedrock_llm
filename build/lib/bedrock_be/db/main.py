@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from bedrock_be.db.base import database
 from bedrock_be.db.dependencies import app

@@ -1,5 +1,7 @@
+"""LLM client implementation."""
 import asyncio
 import json
+import logging
 from functools import lru_cache
 from typing import (Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple,
                     Union, cast)
@@ -21,6 +23,10 @@ from .schema.message import MessageBlock
 from .schema.tools import ToolMetadata
 from .types.enums import ModelName, StopReason
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 class LLMClient:
     _model_implementations: Dict[ModelName, BaseModelImplementation] = {}
@@ -40,7 +46,7 @@ class LLMClient:
         self.retry_config = retry_config or RetryConfig()
         self.bedrock_client = self._get_or_create_bedrock_client(region_name, **kwargs)
         self.model_implementation = self._get_or_create_model_implementation(model_name)
-        self.memory = memory or []
+        self.memory = memory
         self.max_iterations = max_iterations
 
     @classmethod
@@ -126,36 +132,51 @@ class LLMClient:
                 return self.memory
         return prompt
 
-    async def _handle_retry_logic(self, operation, *args, **kwargs):
-        """Handle retries for async operations.
-
-        Args:
-            operation: Async function to retry
-            *args: Positional arguments for operation
-            **kwargs: Keyword arguments for operation
-
-        Returns:
-            Result from successful operation
-
-        Raises:
-            Exception: If max retries exceeded
-        """
+    async def _handle_retry_logic_stream(self, operation, *args, **kwargs):
+        """Handle retry logic for streaming async operations."""
         for attempt in range(self.retry_config.max_retries):
             try:
-                # If operation is a coroutine function
-                result = await operation(*args, **kwargs)
-                return result  # Return the result directly instead of yielding
+                if asyncio.iscoroutinefunction(operation):
+                    async for result in await operation(*args, **kwargs):
+                        yield result
+                else:
+                    async for result in operation(*args, **kwargs):
+                        yield result
+                return
             except (ReadTimeoutError, ClientError) as e:
                 if attempt < self.retry_config.max_retries - 1:
                     delay = self.retry_config.retry_delay * (
                         2**attempt if self.retry_config.exponential_backoff else 1
                     )
-                    print(
+                    logger.warning(
                         f"Attempt {attempt + 1} failed. Retrying in {delay} seconds..."
                     )
                     await asyncio.sleep(delay)
                 else:
-                    print(f"Max retries reached. Error: {str(e)}")
+                    logger.error(f"Max retries reached. Error: {str(e)}")
+                    raise
+        raise Exception("Max retries reached. Unable to invoke model.")
+
+    async def _handle_retry_logic_sync(self, operation, *args, **kwargs):
+        """Handle retry logic for non-streaming async operations."""
+        for attempt in range(self.retry_config.max_retries):
+            try:
+                if asyncio.iscoroutinefunction(operation):
+                    result = await operation(*args, **kwargs)
+                else:
+                    result = operation(*args, **kwargs)
+                return result
+            except (ReadTimeoutError, ClientError) as e:
+                if attempt < self.retry_config.max_retries - 1:
+                    delay = self.retry_config.retry_delay * (
+                        2**attempt if self.retry_config.exponential_backoff else 1
+                    )
+                    logger.warning(
+                        f"Attempt {attempt + 1} failed. Retrying in {delay} seconds..."
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error(f"Max retries reached. Error: {str(e)}")
                     raise
         raise Exception("Max retries reached. Unable to invoke model.")
 
@@ -180,6 +201,28 @@ class LLMClient:
         )
 
     def generate(
+            self,
+            prompt: Union[str, MessageBlock, List[MessageBlock]],
+            system: Optional[str] = None,
+            tools: Optional[Union[List[Dict[str, Any]], List[ToolMetadata]]] = None,
+            config: Optional[ModelConfig] = None,
+            auto_update_memory: bool = True,
+            **kwargs: Any,
+    ) -> Tuple[MessageBlock, StopReason]:
+        """Generate a response from the model synchronously."""
+        async def _run_generate():
+            return await self._handle_retry_logic_sync(
+                self._generate,
+                prompt=prompt,
+                system=system,
+                tools=tools,
+                config=config,
+                auto_update_memory=auto_update_memory,
+                **kwargs
+            )
+        return asyncio.run(_run_generate())
+
+    async def _generate(
         self,
         prompt: Union[str, MessageBlock, List[MessageBlock]],
         system: Optional[str] = None,
@@ -187,39 +230,35 @@ class LLMClient:
         config: Optional[ModelConfig] = None,
         auto_update_memory: bool = True,
         **kwargs: Any,
-    ) -> Tuple[MessageBlock, StopReason]:
-        """Generate a response from the model synchronously."""
+    ):
+        """Internal method to generate response."""
+        config_internal = config or ModelConfig()
+        invoke_message = self._process_prompt(prompt, auto_update_memory)
 
-        async def _generate():
-            config_internal = config or ModelConfig()
-            invoke_message = self._process_prompt(prompt, auto_update_memory)
+        request_body = self.model_implementation.prepare_request(
+            config=config_internal,
+            prompt=cast(
+                Union[str, MessageBlock, List[Dict[Any, Any]]],
+                invoke_message,
+            ),
+            system=system,
+            tools=tools,
+            **kwargs,
+        )
 
-            request_body = self.model_implementation.prepare_request(
-                config=config_internal,
-                prompt=cast(
-                    Union[str, MessageBlock, List[Dict[Any, Any]]],
-                    invoke_message,
-                ),
-                system=system,
-                tools=tools,
-                **kwargs,
-            )
+        response = await self._invoke_model(request_body)
+        response_msg, stop_reason = self.model_implementation.parse_response(
+            response["body"]
+        )
 
-            response = await self._invoke_model(request_body)
-            response_msg, stop_reason = self.model_implementation.parse_response(
-                response["body"]
-            )
+        if (
+            self.memory is not None
+            and auto_update_memory
+            and response_msg is not None
+        ):
+            self.memory.append(response_msg.model_dump())
 
-            if (
-                self.memory is not None
-                and auto_update_memory
-                and response_msg is not None
-            ):
-                self.memory.append(response_msg.model_dump())
-
-            return response_msg, stop_reason
-
-        return asyncio.run(self._handle_retry_logic(_generate))
+        return response_msg, stop_reason
 
     async def generate_async(
         self,
@@ -250,9 +289,11 @@ class LLMClient:
 
             response = await self._invoke_model_stream(request_body)
 
-            async for token, stop_reason, response_msg in self.model_implementation.parse_stream_response(
-                response["body"]
-            ):
+            async for (
+                token,
+                stop_reason,
+                response_msg,
+            ) in self.model_implementation.parse_stream_response(response["body"]):
                 if (
                     self.memory is not None
                     and auto_update_memory
@@ -267,5 +308,5 @@ class LLMClient:
                 yield result
         except Exception:
             # Wrap the generator in retry logic only if there's an error
-            async for result in self._handle_retry_logic(_generate_stream):
+            async for result in self._handle_retry_logic_stream(_generate_stream):
                 yield result

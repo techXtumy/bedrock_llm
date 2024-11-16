@@ -8,14 +8,27 @@ You are a helpful assistant.{% if not TOOLS %}<|eot_id|>{% if REQUEST.content is
 {%- if REQUEST.content is defined %}
 
 {{ REQUEST.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-
 {% elif REQUEST is iterable %}
+{%- set ns = namespace(tool_content='', prev_role=None, tool_count=0) %}
 {%- for message in REQUEST %}
-{%- if message.role == "assistant" %}
-{{ message.content }}<|eot_id|>{%- elif message.role == "tool" %}<|start_header_id|>ipython<|end_header_id|>
+{%- if message.role == "tool" %}
+{%- if ns.tool_content %}
+{%- set ns.tool_count = ns.tool_count + 1 %}
+{%- set ns.tool_content = ns.tool_content + '\nTool ' + ns.tool_count|string + ': ' + message.content %}
+{%- else %}
+{%- set ns.tool_count = 1 %}
+{%- set ns.tool_content = 'Tool 1: ' + message.content %}
+{%- endif %}
+{%- if loop.last or REQUEST[loop.index0 + 1].role != "tool" %}<|start_header_id|>ipython<|end_header_id|>
 
-{{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{%- elif message.role == "user" %}<|start_header_id|>user<|end_header_id|>
+{{ ns.tool_content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{%- set ns.tool_content = '' %}
+{%- set ns.tool_count = 0 %}
+{%- endif %}
+{%- elif message.role == "assistant" %}
+
+{{ message.content }}<|eot_id|>{%- elif message.role == "user" %}<|start_header_id|>user<|end_header_id|>
 
 {{ message.content }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-{% endif %}{% endfor %}
+{%- endif %}{%- endfor %}
 {% endif %}

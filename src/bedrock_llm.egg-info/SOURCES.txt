@@ -83,3 +83,10 @@ src/bedrock_llm/types/aliases.py
 src/bedrock_llm/types/enums.py
 src/bedrock_llm/types/__pycache__/__init__.cpython-311.pyc
 src/bedrock_llm/types/__pycache__/enums.cpython-311.pyc
+tests/__init__.py
+tests/conftest.py
+tests/test_client.py
+tests/__pycache__/__init__.cpython-311.pyc
+tests/__pycache__/conftest.cpython-311-pytest-8.3.3.pyc
+tests/__pycache__/test_client.cpython-311-pytest-8.3.3.pyc
+tests/__pycache__/test_generate.cpython-311-pytest-8.3.3.pyc
