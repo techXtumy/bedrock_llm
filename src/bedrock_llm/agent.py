@@ -12,7 +12,7 @@ from typing import (Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple,
 
 from pydantic import ValidationError
 
-from .client import LLMClient
+from .client import AsyncClient
 from .config.base import RetryConfig
 from .config.model import ModelConfig
 from .schema.message import (MessageBlock, ToolCallBlock, ToolResultBlock,
@@ -131,6 +131,7 @@ class Agent(AsyncClient):
         self,
         region_name: str,
         model_name: ModelName,
+        auto_update_memory: bool = True,
         max_iterations: Optional[int] = 5,
         retry_config: Optional[RetryConfig] = None,
         memory_limit: Optional[int] = None,
@@ -151,6 +152,7 @@ class Agent(AsyncClient):
         self.max_iterations = max_iterations
         self._memory_limit = memory_limit or 100
         self._conversation_history: List[MessageBlock] = []
+        self.auto_update_memory = auto_update_memory
 
     def _manage_memory(self) -> None:
         """
@@ -323,7 +325,8 @@ class Agent(AsyncClient):
         if not isinstance(self.memory, list):
             raise ValueError("Memory must be a list")
 
-        self._update_memory(prompt)
+        if self.auto_update_memory:
+            self._update_memory(prompt)
         tool_metadata = None
 
         if tools:
@@ -338,14 +341,14 @@ class Agent(AsyncClient):
 
         for _ in range(self.max_iterations):
             async for token, stop_reason, response in super().generate_async(
-                prompt=self.memory,
+                prompt=self.memory if self.auto_update_memory else prompt,
                 system=system,
                 tools=tool_metadata,
                 config=config,
-                auto_update_memory=False,
+                auto_update_memory=False,   # Agent has seprate memory update
                 **kwargs,
             ):
-                if response:
+                if response and self.auto_update_memory:
                     self.memory.append(response.model_dump())
 
                 if not stop_reason:
@@ -376,10 +379,12 @@ class Agent(AsyncClient):
 
                     if isinstance(result, list):
                         yield None, None, None, result
-                        self.memory.extend(result)
+                        if self.auto_update_memory:
+                            self.memory.extend(result)
                     else:
                         yield None, None, None, result.content
-                        self.memory.append(result.model_dump())
+                        if self.auto_update_memory:
+                            self.memory.append(result.model_dump())
                     break
                 else:
                     yield None, stop_reason, response, None

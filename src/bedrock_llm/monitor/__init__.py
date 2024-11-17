@@ -10,7 +10,7 @@ from termcolor import cprint
 start_time_perf = time.perf_counter()
 
 
-def _get_performance_metrics(func, start_datetime, start_memory):
+def __get_performance_metrics(func, start_datetime, start_memory):
     end_time = time.perf_counter()
     memory_used = psutil.Process().memory_info().rss / 1024 / 1024 - start_memory
 
@@ -22,7 +22,7 @@ def _get_performance_metrics(func, start_datetime, start_memory):
     }
 
 
-def _print_metrics(metrics):
+def __print_metrics(metrics):
     cprint("\n" + "=" * 50, "blue")
     cprint("[Performance Metrics]", "blue")
     cprint(f"Function    : {metrics['function']}", "blue")
@@ -46,8 +46,8 @@ def monitor_async(func):
 
         try:
             result = await func(*args, **kwargs)
-            metrics = _get_performance_metrics(func, start_datetime, start_memory)
-            _print_metrics(metrics)
+            metrics = __get_performance_metrics(func, start_datetime, start_memory)
+            __print_metrics(metrics)
             return result
         except Exception as e:
             end_time = time.perf_counter()
@@ -73,8 +73,8 @@ def monitor_sync(func):
 
         try:
             result = func(*args, **kwargs)
-            metrics = _get_performance_metrics(func, start_datetime, start_memory)
-            _print_metrics(metrics)
+            metrics = __get_performance_metrics(func, start_datetime, start_memory)
+            __print_metrics(metrics)
             return result
         except Exception as e:
             end_time = time.perf_counter()
@@ -89,7 +89,7 @@ def monitor_sync(func):
     return wrapper
 
 
-def setup_logging():
+def __setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -129,4 +129,4 @@ def log_sync(func):
 
 
 # Setup logging when the module is imported
-setup_logging()
+__setup_logging()

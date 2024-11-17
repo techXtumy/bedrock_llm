@@ -20,7 +20,7 @@ class LlamaImplementation(BaseModelImplementation):
 
     def load_template(
         self,
-        prompt: Union[MessageBlock, Sequence[Dict[str, Any]]],
+        prompt: Sequence[Dict[str, Any]],
         system: Optional[str],
         tools: Optional[Sequence[ToolMetadata]] = None,
     ) -> str:
@@ -36,7 +36,7 @@ class LlamaImplementation(BaseModelImplementation):
     def prepare_request(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, Sequence[Dict[str, Any]]],
+        prompt: Union[str, Sequence[Dict[str, Any]]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Sequence[ToolMetadata]] = None,
         **kwargs: Any,
@@ -57,7 +57,7 @@ class LlamaImplementation(BaseModelImplementation):
     async def prepare_request_async(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, Sequence[Dict[str, Any]]],
+        prompt: Union[str, Sequence[Dict[str, Any]]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Sequence[ToolMetadata]] = None,
         **kwargs: Any,

@@ -3,7 +3,7 @@ import asyncio
 # Add for print console with color
 from termcolor import cprint
 
-from bedrock_llm import LLMClient, ModelName
+from bedrock_llm import AsyncClient, ModelName
 
 
 async def main():
@@ -14,15 +14,15 @@ $$p(\mathbf{h}_T) = \frac{\exp\left(-\frac{1}{2\tau^2}|\mathbf{h}_T - \mu|^2\rig
 
 **Hint:** Use tools from non-linear algebra and machine learning theory, such as spectral analysis and the Karush-Kuhn-Tucker conditions."""
 
-    client = LLMClient(region_name="us-east-1", model_name=ModelName.MISTRAL_7B)
+    client = AsyncClient(region_name="us-east-1", model_name=ModelName.MISTRAL_7B)
 
-    async for token, stop_reason, message in client.generate_async(prompt):
+    async for token, stop_reason,_ in client.generate_async(prompt):
         if stop_reason:
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
         cprint(token, color="green", end="", flush=True)
         
-    client.close()
+    await client.close()
 
 
 if __name__ == "__main__":

@@ -1,18 +1,14 @@
 """Bedrock embeddings model implementations."""
 
-import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
-
-from ..config.model import ModelConfig
 
 
 class EmbeddingInputType(TypedDict):
     input_type: Literal["search_document",
                         "search_query",
                         "classification",
-                        "clustering",
-    ]
+                        "clustering"]
 
 
 class EmbeddingVector(TypedDict):
@@ -109,61 +105,3 @@ class BaseEmbeddingsImplementation(ABC):
             List of embeddings vectors
         """
         pass
-
-
-class TitanEmbeddingsImplementation(BaseEmbeddingsImplementation):
-    """Implementation for Amazon Titan embeddings model."""
-
-    def prepare_embedding_request(
-        self,
-        config: ModelConfig,
-        texts: Union[str, List[str]],
-        **kwargs
-    ) -> Dict[str, Any]:
-        if isinstance(texts, str):
-            texts = [texts]
-
-        return {
-            "inputText": texts[0] if len(texts) == 1 else texts,
-        }
-
-    async def prepare_embedding_request_async(
-        self,
-        config: ModelConfig,
-        texts: Union[str, List[str]],
-        **kwargs
-    ) -> Dict[str, Any]:
-        if isinstance(texts, str):
-            texts = [texts]
-
-        return {
-            "inputText": texts[0] if len(texts) == 1 else texts,
-        }
-
-    def parse_embedding_response(
-        self,
-        response: Any
-    ) -> Union[List[float], List[List[float]]]:
-        body = response.get("body").read()
-        response_json = json.loads(body)
-
-        if "embedding" in response_json:
-            return response_json["embedding"]
-        elif "embeddings" in response_json:
-            return response_json["embeddings"]
-        else:
-            raise ValueError("No embeddings found in response")
-
-    async def parse_embedding_response_async(
-        self,
-        response: Any
-    ) -> Union[List[float], List[List[float]]]:
-        body = response.get("body").read()
-        response_json = json.loads(body)
-
-        if "embedding" in response_json:
-            return response_json["embedding"]
-        elif "embeddings" in response_json:
-            return response_json["embeddings"]
-        else:
-            raise ValueError("No embeddings found in response")

@@ -3,8 +3,8 @@ import asyncio
 # Add for print console with color
 from termcolor import cprint
 
-from bedrock_llm import (LLMClient, MessageBlock, ModelConfig, ModelName,
-                         RetryConfig)
+from bedrock_llm import AsyncClient, ModelConfig, ModelName, RetryConfig
+from bedrock_llm.schema import MessageBlock
 
 
 async def main():
@@ -21,11 +21,11 @@ async def main():
         ModelName.LLAMA_3_2_11B,
         ModelName.LLAMA_3_2_90B,
     ]:
-        llama_client = LLMClient(
-            region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
+        llama_client = AsyncClient(
+            region_name="us-east-1", model_name=model, retry_config=retry_config
         )
         print("Model: ", model)
-        async for token, stop_reason, message in llama_client.generate_async(
+        async for token, stop_reason,_ in llama_client.generate_async(
             config=config, prompt=prompt, system=system
         ):
             if stop_reason:
@@ -39,7 +39,7 @@ async def main():
         ModelName.TITAN_EXPRESS,
         ModelName.TITAN_PREMIER,
     ]:
-        titan_client = LLMClient(
+        titan_client = AsyncClient(
             region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
@@ -57,7 +57,7 @@ async def main():
         ModelName.CLAUDE_3_5_HAIKU,
         ModelName.CLAUDE_3_5_SONNET,
     ]:
-        claude_client = LLMClient(
+        claude_client = AsyncClient(
             region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
@@ -72,7 +72,7 @@ async def main():
 
     # # Using Jamba model
     for model in [ModelName.JAMBA_1_5_MINI, ModelName.JAMBA_1_5_LARGE]:
-        jamba_client = LLMClient(
+        jamba_client = AsyncClient(
             region_name="us-east-1", model_name=model, retry_config=retry_config, profile_name="bedrock"
         )
         print("Model: ", model)
@@ -86,7 +86,7 @@ async def main():
                 cprint(token, color="grey", end="", flush=True)
 
     # Using Mistral 7B Instruct model
-    mistral_client = LLMClient(
+    mistral_client = AsyncClient(
         region_name="us-west-2",
         model_name=ModelName.MISTRAL_7B,
         retry_config=retry_config,
@@ -102,7 +102,7 @@ async def main():
         cprint(token, color="magenta", end="", flush=True)
 
     # Using Mistral Large V2 model
-    mistral_client = LLMClient(
+    mistral_client = AsyncClient(
         region_name="us-west-2",
         model_name=ModelName.MISTRAL_LARGE_2,
         retry_config=retry_config,

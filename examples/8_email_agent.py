@@ -2,10 +2,8 @@ import boto3
 from botocore.exceptions import ClientError
 from termcolor import cprint
 
-from bedrock_llm import (Agent, MessageBlock, ModelConfig, ModelName,
-                         RetryConfig)
-from bedrock_llm.schema.tools import InputSchema, PropertyAttr, ToolMetadata
-from bedrock_llm.types.enums import StopReason
+from bedrock_llm import Agent, ModelConfig, ModelName, RetryConfig, StopReason
+from bedrock_llm.schema import InputSchema, PropertyAttr, ToolMetadata, MessageBlock
 from bedrock_llm.monitor import monitor_async
 
 
@@ -45,9 +43,9 @@ send_email_tool = ToolMetadata(
     ),
 )
 
-
 # Create a function for sending email from outlook
 @Agent.tool(send_email_tool)
+@monitor_async
 async def send_email(
     recipient_email: str, 
     sender_email: str, 

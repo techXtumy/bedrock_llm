@@ -1,23 +1,19 @@
 from .agent import Agent
-from .client import LLMClient
+from .client import AsyncClient, Client, EmbedClient
 from .config.base import RetryConfig
 from .config.model import ModelConfig
-from .schema.message import MessageBlock, ToolResultBlock, ToolUseBlock
-from .schema.tools import InputSchema, ToolMetadata
-from .types.enums import ModelName, StopReason
+from .types.enums import ModelName, StopReason, ToolChoiceEnum
 
 __all__ = [
     "Agent",
-    "LLMClient",
+    "Client",
+    "AsyncClient",
+    "EmbedClient",
     "ModelName",
     "StopReason",
     "RetryConfig",
     "ModelConfig",
-    "MessageBlock",
-    "ToolUseBlock",
-    "ToolResultBlock",
-    "ToolMetadata",
-    "InputSchema",
+    "ToolChoiceEnum",
 ]
 
-__version__ = "0.1.3"
+__version__ = "0.1.6"

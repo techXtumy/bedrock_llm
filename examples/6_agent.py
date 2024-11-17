@@ -1,9 +1,8 @@
 # Add for print console with color
 from termcolor import cprint
 
-from bedrock_llm import (Agent, MessageBlock, ModelConfig, ModelName,
-                         RetryConfig)
-from bedrock_llm.schema.tools import InputSchema, PropertyAttr, ToolMetadata
+from bedrock_llm import Agent, ModelConfig, ModelName, RetryConfig
+from bedrock_llm.schema import InputSchema, PropertyAttr, ToolMetadata, MessageBlock
 from bedrock_llm.types.enums import StopReason
 
 system = "You are a helpful assistant. You have access to realtime information. You can use tools to get the real time data weather of a city."
@@ -53,7 +52,7 @@ async def main():
         response,
         tool_result,
     ) in agent.generate_and_action_async(
-        config=config, prompt=prompt, system=system, tools=["get_weather"]
+        prompt=prompt, system=system, tools=["get_weather"], config=config,
     ):
         # Print out the results
         if token:

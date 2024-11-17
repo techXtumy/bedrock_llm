@@ -44,15 +44,12 @@ class AWSClientManager:
     async def get_async_client(
         cls,
         region_name: str,
-        profile_name: Optional[str] = None,
         **kwargs
     ) -> Any:
         """Get or create a cached async Bedrock client."""
         cache_key = f"{region_name}_{hash(frozenset(kwargs.items()))}"
         if cache_key not in cls._async_clients:
             session = aiobotocore.session.get_session()
-            if profile_name:
-                session.set_credentials(profile_name=profile_name)
             cls._session = session
 
             config = Config(

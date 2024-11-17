@@ -22,8 +22,6 @@ class ClaudeImplementation(BaseModelImplementation):
     ) -> Dict[str, Any]:
         if isinstance(prompt, str):
             prompt = [MessageBlock(role="user", content=prompt).model_dump()]
-        elif isinstance(prompt, MessageBlock):
-            prompt = [prompt.model_dump()]
         elif isinstance(prompt, list):
             prompt = [
                 msg.model_dump() if isinstance(msg, MessageBlock) else msg

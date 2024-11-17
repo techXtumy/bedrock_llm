@@ -47,8 +47,6 @@ class JambaImplementation(BaseModelImplementation):
 
         if isinstance(prompt, str):
             messages.append(MessageBlock(role="user", content=prompt).model_dump())
-        elif isinstance(prompt, MessageBlock):
-            messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
 
@@ -106,8 +104,6 @@ class JambaImplementation(BaseModelImplementation):
 
         if isinstance(prompt, str):
             messages.append(MessageBlock(role="user", content=prompt).model_dump())
-        elif isinstance(prompt, MessageBlock):
-            messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
 

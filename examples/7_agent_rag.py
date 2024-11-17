@@ -5,11 +5,9 @@ import boto3
 import wikipedia
 from termcolor import cprint
 
-from bedrock_llm import (Agent, MessageBlock, ModelConfig, ModelName,
-                         RetryConfig)
-from bedrock_llm.schema.tools import InputSchema, PropertyAttr, ToolMetadata
-from bedrock_llm.types.enums import StopReason
-from bedrock_llm.monitor import monitor_async, log_async
+from bedrock_llm import Agent, ModelConfig, ModelName, RetryConfig, StopReason
+from bedrock_llm.schema import InputSchema, MessageBlock, ToolMetadata
+from bedrock_llm.monitor import monitor_async
 
 # Define the runtime for knowledge base
 runtime = boto3.client("bedrock-agent-runtime", region_name="us-east-1")

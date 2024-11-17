@@ -46,6 +46,16 @@ src/bedrock_llm/__pycache__/__init__.cpython-311.pyc
 src/bedrock_llm/__pycache__/agent.cpython-311.pyc
 src/bedrock_llm/__pycache__/aws_clients.cpython-311.pyc
 src/bedrock_llm/__pycache__/client.cpython-311.pyc
+src/bedrock_llm/client/__init__.py
+src/bedrock_llm/client/async_client.py
+src/bedrock_llm/client/base.py
+src/bedrock_llm/client/embeddings.py
+src/bedrock_llm/client/reranking.py
+src/bedrock_llm/client/sync_client.py
+src/bedrock_llm/client/__pycache__/__init__.cpython-311.pyc
+src/bedrock_llm/client/__pycache__/async_client.cpython-311.pyc
+src/bedrock_llm/client/__pycache__/base.cpython-311.pyc
+src/bedrock_llm/client/__pycache__/sync_client.cpython-311.pyc
 src/bedrock_llm/config/__init__.py
 src/bedrock_llm/config/base.py
 src/bedrock_llm/config/model.py
@@ -83,7 +93,6 @@ src/bedrock_llm/templates/llama32_template.j2
 src/bedrock_llm/templates/llama32_tool_format.j2
 src/bedrock_llm/templates/mistral7_template.j2
 src/bedrock_llm/types/__init__.py
-src/bedrock_llm/types/aliases.py
 src/bedrock_llm/types/enums.py
 src/bedrock_llm/types/__pycache__/__init__.cpython-311.pyc
 src/bedrock_llm/types/__pycache__/enums.cpython-311.pyc

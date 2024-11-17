@@ -1,12 +1,11 @@
 # Add for print console with color
 from termcolor import cprint
 
-from bedrock_llm import (LLMClient, MessageBlock, ModelConfig, ModelName,
-                         RetryConfig)
-from bedrock_llm.schema.tools import InputSchema, PropertyAttr, ToolMetadata
+from bedrock_llm import Client, ModelConfig, ModelName, RetryConfig
+from bedrock_llm.schema import InputSchema, PropertyAttr, ToolMetadata, MessageBlock
 
 # Create a LLM client
-client = LLMClient(
+client = Client(
     region_name="us-west-2",
     model_name=ModelName.LLAMA_3_2_3B,
     memory=[],

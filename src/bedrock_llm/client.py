@@ -16,7 +16,8 @@ from .models import (BaseEmbeddingsImplementation, BaseModelImplementation,
                      ClaudeImplementation, JambaImplementation,
                      LlamaImplementation, MistralChatImplementation,
                      MistralInstructImplementation,
-                     TitanEmbeddingsImplementation, TitanImplementation)
+                     TitanEmbeddingsV1Implementation,
+                     TitanEmbeddingsV2Implementation, TitanImplementation)
 from .schema.message import MessageBlock
 from .schema.tools import ToolMetadata
 from .types.enums import ModelName, StopReason
@@ -61,7 +62,9 @@ class LLMClient:
 
     async def _get_async_client(self):
         if not self._async_client:
-            self._async_client = await AWSClientManager.get_async_client(self.region_name)
+            self._async_client = await AWSClientManager.get_async_client(
+                self.region_name
+            )
         return self._async_client
 
     @classmethod
@@ -87,8 +90,8 @@ class LLMClient:
                 ModelName.JAMBA_1_5_MINI: JambaImplementation(),
                 ModelName.MISTRAL_7B: MistralInstructImplementation(),
                 ModelName.MISTRAL_LARGE_2: MistralChatImplementation(),
-                ModelName.TITAN_EMBED_V1: TitanEmbeddingsImplementation(),
-                ModelName.TITAN_EMBED_V2: TitanEmbeddingsImplementation(),
+                ModelName.TITAN_EMBED_V1: TitanEmbeddingsV1Implementation(),
+                ModelName.TITAN_EMBED_V2: TitanEmbeddingsV2Implementation(),
             }
             cls._model_implementations[model_name] = implementations[model_name]
         return cls._model_implementations[model_name]
@@ -289,9 +292,14 @@ class LLMClient:
         **kwargs
     ) -> Union[List[float], List[List[float]]]:
         """Internal method to generate embeddings asynchronously."""
-        model_impl = self._get_or_create_model_implementation(self.model_config.model_name)
+        model_impl = self._get_or_create_model_implementation(
+            self.model_config.model_name
+        )
         if not isinstance(model_impl, BaseEmbeddingsImplementation):
-            raise ValueError(f"Model {self.model_config.model_id} does not support embeddings")
+            raise ValueError(
+                f"""Model {self.model_config.model_id}
+                does not support embeddings"""
+            )
 
         request_body = model_impl.prepare_embedding_request(
             config=self.model_config,

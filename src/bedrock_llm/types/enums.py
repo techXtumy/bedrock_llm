@@ -38,12 +38,6 @@ class ToolChoiceEnum(Enum):
     NONE = "none"
 
 
-class DescriptionFormat(Enum):
-    NORMAL = "1"
-    CLAUDE = "2"
-    REACT = "3"
-
-
 class StopReason(Enum):
     END_TURN = 1
     MAX_TOKENS = 2

@@ -3,7 +3,8 @@ import asyncio
 # Add for print console with color
 from termcolor import cprint
 
-from bedrock_llm import LLMClient, MessageBlock, ModelName, RetryConfig
+from bedrock_llm import AsyncClient, ModelName, RetryConfig
+from bedrock_llm.schema import MessageBlock
 
 
 # Function to handle user input asynchronously
@@ -18,7 +19,7 @@ async def chat_with_titan():
     """
 
     # Initialize the client
-    client = LLMClient(
+    client = AsyncClient(
         region_name="us-east-1",
         model_name=ModelName.TITAN_PREMIER,
         memory=[],
@@ -44,7 +45,7 @@ async def chat_with_titan():
 
 async def chat_with_claude():
     # Initialize the client with memory enable
-    client = LLMClient(
+    client = AsyncClient(
         region_name="us-east-1",
         model_name=ModelName.CLAUDE_3_5_SONNET,
         memory=[],
@@ -57,7 +58,7 @@ async def chat_with_claude():
         prompt = MessageBlock(role="user", content=input_prompt)
 
         # Simple text generation
-        async for token, stop_reason, _ in client.generate_async(prompt=prompt):
+        async for token, stop_reason,_ in client.generate_async(prompt=prompt):
             if stop_reason is None:
                 cprint(token, color="green", end="", flush=True)
             else:
@@ -72,7 +73,7 @@ async def chat_with_claude():
 
 async def chat_with_llama():
     # Initialize the client
-    client = LLMClient(
+    client = AsyncClient(
         region_name="us-east-1",
         model_name=ModelName.LLAMA_3_2_90B,
         memory=[],
@@ -99,7 +100,7 @@ async def chat_with_llama():
 
 async def chat_with_mistral():
     # Initialize the client
-    client = LLMClient(
+    client = AsyncClient(
         region_name="us-east-1",
         model_name=ModelName.MISTRAL_7B,
         memory=[],
@@ -131,7 +132,7 @@ async def chat_with_mistral():
 
 async def chat_with_jamba():
     # Initialize the client
-    client = LLMClient(
+    client = AsyncClient(
         region_name="us-east-1",
         model_name=ModelName.JAMBA_1_5_MINI,
         memory=[],

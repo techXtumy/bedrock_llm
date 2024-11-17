@@ -4,6 +4,7 @@ examples/email_agent/.env
 src/bedrock_llm/__pycache__
 src/bedrock_llm/config/__pycache__
 src/bedrock_llm/models/__pycache__
+src/bedrock_llm/client/__pycache__
 src/bedrock_llm/monitor/__pycache__
 src/bedrock_llm/schema/__pycache__
 src/bedrock_llm/types/__pycache__
