@@ -54,9 +54,9 @@ class AgentResponse(TypedDict):
     ]
 
 
-class Agent(LLMClient):
+class Agent(AsyncClient):
     """
-    Agent class that extends LLMClient to provide tool execution capabilities.
+    Agent class that extends AsyncClient to provide tool execution capabilities.
 
     The Agent class manages tool registration, execution, and memory management for
     conversations with Large Language Models (LLMs). It supports different LLM

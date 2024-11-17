@@ -135,7 +135,8 @@ async def main():
             cprint(f"\n{stop_reason}", "red", flush=True)
         elif stop_reason:
             cprint(f"\n{stop_reason}", "red", flush=True)
-
+            
+    await agent.close()
 
 if __name__ == "__main__":
     import asyncio

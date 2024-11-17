@@ -144,7 +144,7 @@ class JambaImplementation(BaseModelImplementation):
         return (choice["delta"].get("content"), choice.get("finish_reason"))
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         chunk = chunk["choices"][0]
         message = MessageBlock(
             role="assistant",
@@ -181,7 +181,7 @@ class JambaImplementation(BaseModelImplementation):
         """
         full_answer: List[str] = []
 
-        for event in stream:
+        async for event in stream:
             # yield event, None
             try:
                 chunk = json.loads(event["chunk"]["bytes"])

@@ -116,7 +116,14 @@ async def main():
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
         cprint(token, color="blue", end="", flush=True)
-
+        
+    
+    # Close the connection
+    await llama_client.close()
+    await titan_client.close()
+    await claude_client.close()
+    await jamba_client.close()
+    await mistral_client.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

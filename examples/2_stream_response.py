@@ -21,6 +21,8 @@ $$p(\mathbf{h}_T) = \frac{\exp\left(-\frac{1}{2\tau^2}|\mathbf{h}_T - \mu|^2\rig
             cprint(f"\nGeneration stopped: {stop_reason}", color="red")
             break
         cprint(token, color="green", end="", flush=True)
+        
+    client.close()
 
 
 if __name__ == "__main__":

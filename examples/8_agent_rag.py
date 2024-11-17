@@ -200,6 +200,8 @@ If the search results do not contain information that can answer the question, p
             cprint(f"\n{stop_reason}", "red", flush=True)
         elif stop_reason:
             cprint(f"\n{stop_reason}", "red", flush=True)
+            
+    await agent.close()
 
 
 if __name__ == "__main__":

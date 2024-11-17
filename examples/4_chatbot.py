@@ -38,6 +38,8 @@ async def chat_with_titan():
         # Check for bye bye
         if input_prompt.lower() == "/bye":
             break
+        
+    await client.close()
 
 
 async def chat_with_claude():
@@ -64,6 +66,8 @@ async def chat_with_claude():
         # Check for bye bye
         if input_prompt.lower() == "/bye":
             break
+        
+    await client.close()
 
 
 async def chat_with_llama():
@@ -89,6 +93,8 @@ async def chat_with_llama():
 
         if input.lower() == "/bye":
             break
+        
+    await client.close()
 
 
 async def chat_with_mistral():
@@ -119,6 +125,8 @@ async def chat_with_mistral():
 
         if prompt.content.lower() == "/bye":
             break
+        
+    await client.close()
 
 
 async def chat_with_jamba():
@@ -144,6 +152,9 @@ async def chat_with_jamba():
         # Check for bye bye
         if input.lower() == "/bye":
             break
+        
+    await client.close()
+
 
 
 if __name__ == "__main__":

@@ -69,7 +69,7 @@ class ClaudeImplementation(BaseModelImplementation):
         return self.prepare_request(config, prompt, system, tools, **kwargs)
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         message = MessageBlock(
             role=chunk["role"],
             content=chunk["content"],
@@ -101,7 +101,7 @@ class ClaudeImplementation(BaseModelImplementation):
             ),
         )
 
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
 
             if chunk["type"] == "content_block_delta":

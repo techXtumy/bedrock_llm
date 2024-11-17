@@ -92,7 +92,7 @@ class TitanImplementation(BaseModelImplementation):
         }
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         message = MessageBlock(
             role="assistant",
             content=chunk["results"][0]["outputText"],
@@ -115,7 +115,7 @@ class TitanImplementation(BaseModelImplementation):
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
         full_response = []
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             yield chunk["outputText"], None, None
             full_response.append(chunk["outputText"])

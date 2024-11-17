@@ -69,6 +69,8 @@ async def main():
             cprint(f"\n{stop_reason}", "red")
         elif stop_reason:
             cprint(f"\n{stop_reason}", "red")
+            
+    await agent.close()
 
 
 if __name__ == "__main__":

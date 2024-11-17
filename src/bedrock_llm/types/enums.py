@@ -20,6 +20,16 @@ class ModelName(str, Enum):
     JAMBA_1_5_LARGE = "ai21.jamba-1-5-large-v1:0"
     MISTRAL_LARGE_2 = "mistral.mistral-large-2407-v1:0"
     MISTRAL_7B = "mistral.mistral-7b-instruct-v0:2"
+    TITAN_EMBED_V1 = "amazon.titan-embed-text-v1"
+    TITAN_EMBED_V2 = "amazon.titan-embed-text-v2:0"
+    TITAN_EMBED_IMAGE = "amazon.titan-embed-image-v1"
+    COHERE_ENG = "cohere.embed-english-v3"
+    COHERE_MULTI = "cohere.embed-multilingual-v3"
+    TITAN_IMAGE_GEN = "amazon.titan-embed-image-v1"
+    STABLE_DIFF_3_LARGE = "stability.sd3-large-v1:0"
+    STABLE_IMAGE_CORE = "stability.stable-image-core-v1:0"
+    STABLE_IMAGE_ULTRA = "stability.stable-image-ultra-v1:0"
+    STABLE_DIFF_XL = "stability.stable-diffusion-xl-v1"
 
 
 class ToolChoiceEnum(Enum):

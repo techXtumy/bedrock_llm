@@ -53,6 +53,8 @@ async def main():
 
         if stop_reason == StopReason.END_TURN:
             cprint(f"\n{stop_reason}", "red")
+            
+    await client.close()
 
 
 if __name__ == "__main__":

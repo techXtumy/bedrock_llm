@@ -16,6 +16,19 @@ The `bedrock_be` component provides infrastructure and services for deploying LL
 
 ## bedrock_llm
 
+### Client Package
+The `client` package provides different implementations for interacting with AWS Bedrock:
+
+- `BaseClient`: Abstract base class providing common functionality
+- `AsyncClient`: Asynchronous client implementation with streaming support
+- `SyncClient`: Synchronous client implementation
+- `EmbeddingsClient`: Specialized client for embedding operations
+- `RerankingClient`: Specialized client for reranking operations (future)
+
+The Agent class inherits from AsyncClient and adds tool execution capabilities.
+
+### Components
+
 The `bedrock_llm` component handles LLM orchestration and interaction logic. It includes:
 
 - `client.py`: The main LLMClient class for interacting with various LLM models.

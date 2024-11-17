@@ -190,7 +190,7 @@ class MistralChatImplementation(BaseModelImplementation):
         return request_body
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         chunk = chunk["choices"][0]
         message = MessageBlock(
             role=chunk["message"]["role"],
@@ -221,7 +221,7 @@ class MistralChatImplementation(BaseModelImplementation):
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
         full_response: List[str] = []
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["choices"][0]
             if chunk["stop_reason"]:
@@ -347,7 +347,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         }
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         chunk = chunk["outputs"][0]
         message = MessageBlock(role="assistant", content=chunk["text"])
         if chunk["stop_reason"] == "stop":
@@ -363,7 +363,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
         full_response: List[str] = []
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["outputs"][0]
             if chunk["stop_reason"]:
