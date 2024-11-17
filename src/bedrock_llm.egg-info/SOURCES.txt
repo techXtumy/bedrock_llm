@@ -36,7 +36,6 @@ src/bedrock_be/web/api/monitoring/views.py
 src/bedrock_llm/__init__.py
 src/bedrock_llm/agent.py
 src/bedrock_llm/aws_clients.py
-src/bedrock_llm/client.py
 src/bedrock_llm.egg-info/PKG-INFO
 src/bedrock_llm.egg-info/SOURCES.txt
 src/bedrock_llm.egg-info/dependency_links.txt
@@ -55,6 +54,7 @@ src/bedrock_llm/client/sync_client.py
 src/bedrock_llm/client/__pycache__/__init__.cpython-311.pyc
 src/bedrock_llm/client/__pycache__/async_client.cpython-311.pyc
 src/bedrock_llm/client/__pycache__/base.cpython-311.pyc
+src/bedrock_llm/client/__pycache__/embeddings.cpython-311.pyc
 src/bedrock_llm/client/__pycache__/sync_client.cpython-311.pyc
 src/bedrock_llm/config/__init__.py
 src/bedrock_llm/config/base.py
@@ -67,6 +67,7 @@ src/bedrock_llm/models/ai21.py
 src/bedrock_llm/models/amazon.py
 src/bedrock_llm/models/anthropic.py
 src/bedrock_llm/models/base.py
+src/bedrock_llm/models/cohere.py
 src/bedrock_llm/models/embeddings.py
 src/bedrock_llm/models/meta.py
 src/bedrock_llm/models/mistral.py
@@ -75,6 +76,7 @@ src/bedrock_llm/models/__pycache__/ai21.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/amazon.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/anthropic.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/base.cpython-311.pyc
+src/bedrock_llm/models/__pycache__/cohere.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/embeddings.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/meta.cpython-311.pyc
 src/bedrock_llm/models/__pycache__/mistral.cpython-311.pyc

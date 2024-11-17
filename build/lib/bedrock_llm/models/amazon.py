@@ -1,13 +1,22 @@
 import json
+import logging
 import os
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
+from typing import (Any, AsyncGenerator, Coroutine, Dict, List, Optional,
+                    Tuple, Union)
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from ..models.base import BaseModelImplementation, ModelConfig
+from ..config.model import ModelConfig
 from ..schema.message import MessageBlock, SystemBlock
 from ..schema.tools import ToolMetadata
 from ..types.enums import StopReason
+from .base import BaseModelImplementation
+from .embeddings import (BaseEmbeddingsImplementation, EmbeddingInputType,
+                         EmbeddingVector, Metadata)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class TitanImplementation(BaseModelImplementation):
@@ -27,7 +36,7 @@ class TitanImplementation(BaseModelImplementation):
     def prepare_request(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, List[Dict]],
+        prompt: Union[str, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
@@ -62,7 +71,7 @@ class TitanImplementation(BaseModelImplementation):
     async def prepare_request_async(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, List[Dict]],
+        prompt: Union[str, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Union[List[ToolMetadata], List[Dict]]] = None,
         **kwargs
@@ -92,7 +101,7 @@ class TitanImplementation(BaseModelImplementation):
         }
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         message = MessageBlock(
             role="assistant",
             content=chunk["results"][0]["outputText"],
@@ -115,7 +124,7 @@ class TitanImplementation(BaseModelImplementation):
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
         full_response = []
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             yield chunk["outputText"], None, None
             full_response.append(chunk["outputText"])
@@ -130,3 +139,107 @@ class TitanImplementation(BaseModelImplementation):
                 else:
                     yield None, StopReason.ERROR, message
                 return
+
+
+class TitanEmbedding(BaseEmbeddingsImplementation):
+    def parse_embedding_response(
+        self,
+        response: Any
+    ) -> Tuple[EmbeddingVector, Optional[Metadata]]:
+        body = response.get("body").read()
+        response_json = json.loads(body)
+
+        if "embedding" in response_json:
+            embedding = response_json["embedding"]
+            metadata = {
+                k: v for k,
+                v in response_json.items() if k != "embedding"
+            }
+            return embedding, metadata
+        else:
+            raise ValueError("No embeddings found in response")
+
+    async def parse_embedding_response_async(
+        self,
+        response: Any
+    ) -> Tuple[EmbeddingVector, Optional[Metadata]]:
+        body = response.get("body").read()
+        response_json = json.loads(body)
+
+        if "embedding" in response_json:
+            embedding = response_json["embedding"]
+            metadata = {
+                k: v for k,
+                v in response_json.items() if k != "embedding"
+            }
+            return embedding, metadata
+        else:
+            raise ValueError("No embeddings found in response")
+
+
+class TitanEmbeddingsV1Implementation(TitanEmbedding):
+
+    def prepare_embedding_request(
+        self,
+        texts: Union[str, List[str]],
+        **kwargs
+    ) -> Dict[str, Any]:
+        if isinstance(texts, List):
+            raise ValueError(
+                """Titan embedding model only support string as input
+                Only input texts as a string that you want to embedding"""
+            )
+
+        return {
+            "inputText": texts
+        }
+
+    async def prepare_embedding_request_async(
+        self,
+        texts: Union[str, List[str]],
+        **kwargs
+    ) -> Coroutine[Any, Any, Dict[str, Any]]:
+        return self.prepare_embedding_request(
+            texts,
+            **kwargs
+        )
+
+
+class TitanEmbeddingsV2Implementation(TitanEmbedding):
+
+    def prepare_embedding_request(
+        self,
+        texts: Union[str, List[str]],
+        input_type: EmbeddingInputType,
+        **kwargs
+    ) -> Dict[str, Any]:
+        if isinstance(texts, List):
+            raise ValueError(
+                """Titan embedding model only support string as input
+                Only input texts as a string that you want to embedding"""
+            )
+
+        if input_type != "search_document":
+            logging.warning(
+                """This model only support 1 type of input.
+                'search_document'"""
+            )
+
+        return {
+            "inputText": texts,
+            "dimensions": kwargs.pop("dimensions", 1024),
+            "normalize": kwargs.pop("normalize", True)
+        }
+
+    async def prepare_embedding_request_async(
+        self,
+        texts: Union[str, List[str]],
+        input_type: EmbeddingInputType,
+        embedding_type: Optional[str] = float,
+        **kwargs
+    ) -> Coroutine[Any, Any, Dict[str, Any]]:
+        return self.prepare_embedding_request(
+            texts,
+            input_type,
+            **kwargs
+        )

@@ -204,6 +204,7 @@ This diagram shows the main classes and their relationships within the bedrock_l
 10. `ModelConfig` and `RetryConfig` are used by `LLMClient` to configure model behavior and handle document-related operations.
 
 The arrows in the diagram indicate the following relationships:
+
 - Inheritance: A class inherits from another (e.g., Agent inherits from LLMClient)
 - Composition: A class contains or is composed of another class (e.g., LLMClient contains BaseModelImplementation)
 - Association: A class is associated with another class (e.g., Agent is associated with ToolMetadata)

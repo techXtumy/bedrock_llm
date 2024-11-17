@@ -47,8 +47,6 @@ class JambaImplementation(BaseModelImplementation):
 
         if isinstance(prompt, str):
             messages.append(MessageBlock(role="user", content=prompt).model_dump())
-        elif isinstance(prompt, MessageBlock):
-            messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
 
@@ -106,8 +104,6 @@ class JambaImplementation(BaseModelImplementation):
 
         if isinstance(prompt, str):
             messages.append(MessageBlock(role="user", content=prompt).model_dump())
-        elif isinstance(prompt, MessageBlock):
-            messages.append(prompt.model_dump())
         else:
             messages.extend(prompt)
 
@@ -144,7 +140,7 @@ class JambaImplementation(BaseModelImplementation):
         return (choice["delta"].get("content"), choice.get("finish_reason"))
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         chunk = chunk["choices"][0]
         message = MessageBlock(
             role="assistant",
@@ -181,7 +177,7 @@ class JambaImplementation(BaseModelImplementation):
         """
         full_answer: List[str] = []
 
-        for event in stream:
+        async for event in stream:
             # yield event, None
             try:
                 chunk = json.loads(event["chunk"]["bytes"])

@@ -85,7 +85,7 @@ class MistralChatImplementation(BaseModelImplementation):
     def prepare_request(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, List[Dict]],
+        prompt: Union[str, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[
             Union[List[ToolMetadata], List[Dict]]
@@ -112,18 +112,8 @@ class MistralChatImplementation(BaseModelImplementation):
             request_body["messages"] = request_body["messages"] + [
                 {"role": "user", "content": prompt}
             ]
-        elif isinstance(prompt, MessageBlock):
-            request_body["messages"] = request_body["messages"] + [
-                {"role": prompt.role, "content": prompt.content}
-            ]
         elif isinstance(prompt, list):
-            messages = []
-            for msg in prompt:
-                if isinstance(msg, dict):
-                    messages.append(msg)
-                elif isinstance(msg, MessageBlock):
-                    messages.append({"role": msg.role, "content": msg.content})
-            request_body["messages"] = request_body["messages"] + messages
+            request_body["messages"] = request_body["messages"] + prompt
 
         if tools:
             request_body["tools"] = [self._parse_tool_metadata(tool) for tool in tools]
@@ -135,7 +125,7 @@ class MistralChatImplementation(BaseModelImplementation):
     async def prepare_request_async(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, List[Dict]],
+        prompt: Union[str, List[Dict]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[
             Union[List[ToolMetadata], List[Dict]]
@@ -151,15 +141,8 @@ class MistralChatImplementation(BaseModelImplementation):
         messages = []
         if isinstance(prompt, str):
             messages.append(MessageBlock(role="user", content=prompt).model_dump())
-        elif isinstance(prompt, MessageBlock):
-            messages.append(prompt.model_dump())
         elif isinstance(prompt, list):
-            messages.extend(
-                [
-                    msg.model_dump() if isinstance(msg, MessageBlock) else msg
-                    for msg in prompt
-                ]
-            )
+            messages.extend(prompt)
 
         if system is not None:
             if isinstance(system, SystemBlock):
@@ -190,7 +173,7 @@ class MistralChatImplementation(BaseModelImplementation):
         return request_body
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         chunk = chunk["choices"][0]
         message = MessageBlock(
             role=chunk["message"]["role"],
@@ -221,7 +204,7 @@ class MistralChatImplementation(BaseModelImplementation):
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
         full_response: List[str] = []
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["choices"][0]
             if chunk["stop_reason"]:
@@ -347,7 +330,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         }
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         chunk = chunk["outputs"][0]
         message = MessageBlock(role="assistant", content=chunk["text"])
         if chunk["stop_reason"] == "stop":
@@ -363,7 +346,7 @@ class MistralInstructImplementation(BaseModelImplementation):
         Tuple[Optional[str], Optional[StopReason], Optional[MessageBlock]], None
     ]:
         full_response: List[str] = []
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             chunk = chunk["outputs"][0]
             if chunk["stop_reason"]:

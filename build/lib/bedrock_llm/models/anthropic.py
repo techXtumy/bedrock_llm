@@ -22,8 +22,6 @@ class ClaudeImplementation(BaseModelImplementation):
     ) -> Dict[str, Any]:
         if isinstance(prompt, str):
             prompt = [MessageBlock(role="user", content=prompt).model_dump()]
-        elif isinstance(prompt, MessageBlock):
-            prompt = [prompt.model_dump()]
         elif isinstance(prompt, list):
             prompt = [
                 msg.model_dump() if isinstance(msg, MessageBlock) else msg
@@ -69,7 +67,7 @@ class ClaudeImplementation(BaseModelImplementation):
         return self.prepare_request(config, prompt, system, tools, **kwargs)
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         message = MessageBlock(
             role=chunk["role"],
             content=chunk["content"],
@@ -101,7 +99,7 @@ class ClaudeImplementation(BaseModelImplementation):
             ),
         )
 
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
 
             if chunk["type"] == "content_block_delta":

@@ -20,7 +20,7 @@ class LlamaImplementation(BaseModelImplementation):
 
     def load_template(
         self,
-        prompt: Union[MessageBlock, Sequence[Dict[str, Any]]],
+        prompt: Sequence[Dict[str, Any]],
         system: Optional[str],
         tools: Optional[Sequence[ToolMetadata]] = None,
     ) -> str:
@@ -36,7 +36,7 @@ class LlamaImplementation(BaseModelImplementation):
     def prepare_request(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, Sequence[Dict[str, Any]]],
+        prompt: Union[str, Sequence[Dict[str, Any]]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Sequence[ToolMetadata]] = None,
         **kwargs: Any,
@@ -57,7 +57,7 @@ class LlamaImplementation(BaseModelImplementation):
     async def prepare_request_async(
         self,
         config: ModelConfig,
-        prompt: Union[str, MessageBlock, Sequence[Dict[str, Any]]],
+        prompt: Union[str, Sequence[Dict[str, Any]]],
         system: Optional[Union[str, SystemBlock]] = None,
         tools: Optional[Sequence[ToolMetadata]] = None,
         **kwargs: Any,
@@ -76,7 +76,7 @@ class LlamaImplementation(BaseModelImplementation):
         }
 
     def parse_response(self, response: Any) -> Tuple[MessageBlock, StopReason]:
-        chunk = json.loads(response.read())
+        chunk = json.loads(response)
         response_text = chunk["generation"].strip()
 
         if response_text[0] == "[" and response_text[-1] == "]":
@@ -156,7 +156,7 @@ class LlamaImplementation(BaseModelImplementation):
     ]:
         full_answer: List[str] = []
 
-        for event in stream:
+        async for event in stream:
             chunk = json.loads(event["chunk"]["bytes"])
             yield chunk["generation"], None, None
             full_answer.append(chunk["generation"])
