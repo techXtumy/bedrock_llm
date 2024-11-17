@@ -8,6 +8,7 @@ from .amazon import (TitanEmbeddingsV1Implementation,
                      TitanEmbeddingsV2Implementation, TitanImplementation)
 from .anthropic import ClaudeImplementation
 from .base import BaseModelImplementation
+from .cohere import CohereEnglishEmbedding, CohereMultilingualEmbedding
 from .embeddings import BaseEmbeddingsImplementation
 from .meta import LlamaImplementation
 from .mistral import MistralChatImplementation, MistralInstructImplementation
@@ -33,6 +34,8 @@ MODEL_IMPLEMENTATIONS: Dict[
     ModelName.MISTRAL_LARGE_2: MistralChatImplementation,
     ModelName.TITAN_EMBED_V1: TitanEmbeddingsV1Implementation,
     ModelName.TITAN_EMBED_V2: TitanEmbeddingsV2Implementation,
+    ModelName.COHERE_ENG: CohereEnglishEmbedding,
+    ModelName.COHERE_MULTI: CohereMultilingualEmbedding,
 }
 
 __all__ = [
@@ -45,5 +48,7 @@ __all__ = [
     "LlamaImplementation",
     "MistralChatImplementation",
     "MistralInstructImplementation",
+    "CohereEnglishEmbedding",
+    "CohereMultilingualEmbedding",
     "MODEL_IMPLEMENTATIONS"
 ]

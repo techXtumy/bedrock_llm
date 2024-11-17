@@ -5,7 +5,7 @@ from bedrock_llm import EmbedClient, ModelName
 def sync_main():
     sync_client = EmbedClient(
         region_name="us-east-1",
-        model_name=ModelName.TITAN_EMBED_V1,
+        model_name=ModelName.COHERE_ENG,
     )
     text = "Hello, this is sync function"
     response = sync_client.embed(text, "search_document")

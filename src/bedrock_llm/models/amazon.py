@@ -7,11 +7,12 @@ from typing import (Any, AsyncGenerator, Coroutine, Dict, List, Optional,
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..config.model import ModelConfig
-from ..models import BaseEmbeddingsImplementation, BaseModelImplementation
-from ..models.embeddings import EmbeddingInputType, EmbeddingVector, Metadata
 from ..schema.message import MessageBlock, SystemBlock
 from ..schema.tools import ToolMetadata
 from ..types.enums import StopReason
+from .base import BaseModelImplementation
+from .embeddings import (BaseEmbeddingsImplementation, EmbeddingInputType,
+                         EmbeddingVector, Metadata)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
