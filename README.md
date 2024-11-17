@@ -271,11 +271,39 @@ These decorators are optimized for minimal performance impact on your applicatio
 
 ## Architecture
 
-For a detailed overview of the library's architecture, please see [ARCHITECTURE.md](ARCHITECTURE.md).
+The Bedrock LLM library is architected for scalability, reliability, and extensibility. Key architectural components include:
+
+### Core Components
+
+- **Client Layer**: Robust interfaces for Bedrock service interaction
+  - Async/Sync clients with streaming support
+  - Configurable retry logic
+  - Memory management
+  - Type-safe operations
+
+- **Model Layer**: Flexible model implementation framework
+  - Support for multiple LLM providers
+  - Custom parameter optimization
+  - Response formatting
+
+- **Agent System**: Advanced autonomous capabilities
+  - Tool management and execution
+  - State preservation
+  - Error handling
+  - Type-safe responses
+
+### Infrastructure (bedrock_be)
+
+- AWS service integration
+- Deployment automation
+- Monitoring and scaling
+- Security management
+
+For a comprehensive architectural overview, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Examples
 
-For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/wiki).
+For more detailed usage instructions and API documentation, please refer to our [documentation](https://github.com/yourusername/bedrock_llm/LIBRARY_DOCUMENTATION.md).
 
 You can also see some examples of how to use and build LLM flow using the libary
 
@@ -287,6 +315,16 @@ You can also see some examples of how to use and build LLM flow using the libary
 - [agent](https://github.com/Phicks-debug/bedrock_llm/blob/main/examples/7_agent.py)
 
 and more to come, we are working on it :)
+
+## More Documents and wanna understand the project more?
+
+For more detailed documentation, examples, and project insights, please refer to the following resources:
+
+- **Documentation**: [https://github.com/Phicks-debug/bedrock_llm/LIBRARY_DOCUMENTATION.md](<https://github.com/Phicks-debug/bedrock_llm/LIBRARY_DOCUMENTATION.md>)
+- **Examples**: [https://github.com/Phicks-debug/bedrock_llm/examples](https://github.com/Phicks-debug/bedrock_llm/examples)
+- **Project Insights**: [https://github.com/Phicks-debug/bedrock_llm/docs](https://github.com/Phicks-debug/bedrock_llm/docs)
+
+Feel free to reach out if you have any questions or need further assistance!
 
 ## Requirements
 
