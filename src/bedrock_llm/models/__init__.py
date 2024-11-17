@@ -4,7 +4,8 @@ from .ai21 import JambaImplementation
 from .amazon import TitanImplementation
 from .anthropic import ClaudeImplementation
 from .base import BaseModelImplementation
-from .embeddings import BaseEmbeddingsImplementation, TitanEmbeddingsImplementation
+from .embeddings import (BaseEmbeddingsImplementation,
+                         TitanEmbeddingsImplementation)
 from .meta import LlamaImplementation
 from .mistral import MistralChatImplementation, MistralInstructImplementation
 

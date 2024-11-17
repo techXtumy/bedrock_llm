@@ -7,22 +7,16 @@ from functools import lru_cache
 from typing import (Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple,
                     Union, cast)
 
-import asyncio
-
 from botocore.exceptions import ClientError, ReadTimeoutError
 
 from .aws_clients import AWSClientManager
 from .config.base import RetryConfig
 from .config.model import ModelConfig
-from .models import (BaseModelImplementation, 
-                     BaseEmbeddingsImplementation,
-                     TitanEmbeddingsImplementation,
-                     TitanImplementation,
-                     ClaudeImplementation,
-                     JambaImplementation,
-                     LlamaImplementation,
-                     MistralChatImplementation,
-                     MistralInstructImplementation,)
+from .models import (BaseEmbeddingsImplementation, BaseModelImplementation,
+                     ClaudeImplementation, JambaImplementation,
+                     LlamaImplementation, MistralChatImplementation,
+                     MistralInstructImplementation,
+                     TitanEmbeddingsImplementation, TitanImplementation)
 from .schema.message import MessageBlock
 from .schema.tools import ToolMetadata
 from .types.enums import ModelName, StopReason
@@ -54,7 +48,7 @@ class LLMClient:
         self.memory = memory
         self.max_iterations = max_iterations
         self._sync_client = self._get_or_create_sync_bedrock_client(
-            region_name, 
+            region_name,
             **kwargs
         )
         self._async_client = None
@@ -108,7 +102,7 @@ class LLMClient:
         if self.memory is not None and auto_update_memory:
             if isinstance(prompt, str):
                 raise ValueError(
-                    """Prompt must be MessageBlock or list when 
+                    """Prompt must be MessageBlock or list when
                     memory is enabled"""
                 )
             if isinstance(prompt, MessageBlock):
@@ -214,7 +208,7 @@ class LLMClient:
         )
 
         response = self._handle_retry_logic_sync(
-            self._invoke_model, 
+            self._invoke_model,
             request_body
         )
         response_msg, stop_reason = self.model_implementation.parse_response(
@@ -279,7 +273,7 @@ class LLMClient:
         except Exception:
             # Wrap the generator in retry logic only if there's an error
             async for result in self._handle_retry_logic_stream(_generate_stream):
-                yield result  
+                yield result
 
     def embed(
         self,
@@ -311,7 +305,7 @@ class LLMClient:
         )
 
         return model_impl.parse_embedding_response(response)
-        
+
     async def close(self):
         """Close the async client session."""
         if self._async_client:

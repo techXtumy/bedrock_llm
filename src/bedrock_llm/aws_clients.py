@@ -1,8 +1,10 @@
 """Module for managing AWS client instances."""
-from typing import Dict, Any, Optional
-import boto3
+from typing import Any, Dict, Optional
+
 import aiobotocore.session
+import boto3
 from botocore.config import Config
+
 
 class AWSClientManager:
     """Manages both sync and async AWS client instances."""
@@ -12,9 +14,9 @@ class AWSClientManager:
 
     @classmethod
     def get_sync_client(
-        cls, 
-        region_name: str, 
-        profile_name: Optional[str] = None, 
+        cls,
+        region_name: str,
+        profile_name: Optional[str] = None,
         **kwargs
     ) -> Any:
         """Get or create a cached synchronous Bedrock client."""
@@ -31,18 +33,18 @@ class AWSClientManager:
                 else boto3.Session()
             )
             cls._sync_clients[cache_key] = session.client(
-                "bedrock-runtime", 
-                region_name=region_name, 
-                config=config, 
+                "bedrock-runtime",
+                region_name=region_name,
+                config=config,
                 **kwargs
             )
         return cls._sync_clients[cache_key]
 
     @classmethod
     async def get_async_client(
-        cls, 
-        region_name: str, 
-        profile_name: Optional[str] = None, 
+        cls,
+        region_name: str,
+        profile_name: Optional[str] = None,
         **kwargs
     ) -> Any:
         """Get or create a cached async Bedrock client."""
@@ -52,22 +54,22 @@ class AWSClientManager:
             if profile_name:
                 session.set_credentials(profile_name=profile_name)
             cls._session = session
-            
+
             config = Config(
                 retries={"max_attempts": 3, "mode": "standard"},
                 max_pool_connections=50,
                 tcp_keepalive=True,
             )
-            
+
             client = await cls._session.create_client(
-                "bedrock-runtime", 
+                "bedrock-runtime",
                 region_name=region_name,
                 config=config,
                 **kwargs
             ).__aenter__()
-            
+
             cls._async_clients[cache_key] = client
-            
+
         return cls._async_clients[cache_key]
 
     @classmethod
