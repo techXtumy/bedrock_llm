@@ -543,8 +543,6 @@ class AgentResponse(TypedDict):
 - Contract enforcement
 - Compatibility verification
 
-#### Best Practices
-
 ##### Tool Implementation
 
 1. **Design Guidelines**
@@ -673,20 +671,20 @@ The library includes built-in monitoring capabilities:
 
 ## Best Practices
 
-### Memory Management
+### Memory Management Options
 
 - Use appropriate memory settings for your use case
 - Implement cleanup for long-running applications
 - Monitor memory usage in high-throughput scenarios
 
-### Error Handling
+### Error Hadeling Options
 
 - Implement appropriate retry strategies
 - Handle rate limits gracefully
 - Log and monitor errors
 - Use type checking for tool inputs/outputs
 
-### Performance Optimization
+### Performance Optimization Options
 
 - Use async operations for concurrent requests
 - Implement caching where appropriate
