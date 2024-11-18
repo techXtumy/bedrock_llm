@@ -27,6 +27,7 @@ The Client Layer is the cornerstone of the library's interaction with Amazon Bed
 #### BaseClient Architecture
 
 ##### Core Components
+
 ```python
 class BaseClient(ABC):
         self.model = self._initialize_model(model_config)
@@ -35,6 +36,7 @@ class BaseClient(ABC):
 ```
 
 ##### Key Features
+
 1. **Authentication and Session Management**
    - Secure AWS credential handling
    - Automatic token refresh
@@ -59,6 +61,7 @@ class BaseClient(ABC):
 #### Specialized Client Implementations
 
 ##### AsyncClient
+
 Optimized for high-performance scenarios:
 
 ```python
@@ -80,13 +83,15 @@ class AsyncClient(BaseClient):
 ```
 
 ###### Key Features
+
 - Non-blocking operations
 - Connection pooling
 - Request prioritization
 - Stream processing
 - Resource management
 
-##### SyncClient 
+##### SyncClient
+
 Simplified interface for basic use cases:
 
 ```python
@@ -98,6 +103,7 @@ class SyncClient(BaseClient):
 ```
 
 ###### Features
+
 - Blocking operations
 - Automatic retries
 - Batch processing
@@ -105,6 +111,7 @@ class SyncClient(BaseClient):
 - Resource cleanup
 
 ##### EmbeddingsClient
+
 Specialized client for vector operations:
 
 ```python
@@ -117,6 +124,7 @@ class EmbeddingsClient(BaseClient):
 ```
 
 ###### Capabilities
+
 - Multi-model support
 - Batch optimization
 - Dimension handling
