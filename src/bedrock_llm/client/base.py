@@ -154,7 +154,9 @@ class BaseClient(ABC):
             if self.memory is not None and auto_update_memory:
                 self.memory.extend(invoke_message)
 
-            return self.memory
+                return self.memory
+            else:
+                return invoke_message
 
         raise ValueError(f"Invalid prompt type: {type(prompt)}")
 
