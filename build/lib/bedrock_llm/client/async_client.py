@@ -32,7 +32,12 @@ class AsyncClient(BaseClient):
             max_iterations,
             **kwargs
         )
+        self._async_client = None
 
+    
+    async def open(self,):
+        self._async_client = await self._get_async_client()
+    
     async def generate_async(
         self,
         prompt: Union[str, MessageBlock, Sequence[MessageBlock]],

@@ -85,6 +85,8 @@ src/bedrock_llm/monitor/__pycache__/__init__.cpython-311.pyc
 src/bedrock_llm/pipeline/__init__.py
 src/bedrock_llm/pipeline/core.py
 src/bedrock_llm/pipeline/examples.py
+src/bedrock_llm/pipeline/optimized.py
+src/bedrock_llm/pipeline/optimized_example.py
 src/bedrock_llm/schema/__init__.py
 src/bedrock_llm/schema/cache.py
 src/bedrock_llm/schema/message.py

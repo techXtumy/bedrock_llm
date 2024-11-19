@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="bedrock_llm",
-    version="0.1.8.5",
+    version="0.1.9.beta",
     packages=find_packages(where="src"),
     include_package_data=True,
     package_dir={"": "src"},
