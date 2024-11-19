@@ -15,6 +15,7 @@ The library is organized into several key components:
 5. **Agent**: Implements autonomous agent capabilities
 6. **Types**: Contains type definitions and enums
 7. **Monitor**: Provides monitoring and observability features
+8. **Pipeline**: Offers a powerful pipeline system for building efficient data processing workflows
 
 ## File Structure
 
@@ -45,6 +46,12 @@ src/bedrock_llm/
 │   ├── meta.py       # Meta Llama model implementation
 │   └── mistral.py    # Mistral model implementation
 ├── monitor/          # Monitoring and observability
+├── pipeline/         # Pipeline components
+│   ├── __init__.py
+│   ├── core.py       # Core pipeline implementation
+│   ├── optimized.py  # Optimized pipeline features
+│   ├── examples.py   # Usage examples
+│   └── optimized_example.py  # Optimized pipeline examples
 ├── schema/          # Data structures and validation
 │   ├── __init__.py
 │   ├── cache.py     # Caching implementations
@@ -214,6 +221,120 @@ Features:
 - Serialization support
 - Nested structure support
 - Custom validation rules
+
+## Pipeline Components
+
+The library includes a powerful pipeline system for building efficient data processing workflows:
+
+### Basic Pipeline Usage
+
+```python
+from bedrock_llm.pipeline import Pipeline, PipelineNode
+
+# Create a simple pipeline
+pipeline = Pipeline("text-processing")
+
+# Add processing nodes
+node1 = PipelineNode("tokenizer", tokenize_func)
+node2 = PipelineNode("embedding", embed_func)
+
+# Connect nodes
+pipeline.add_node(node1)
+pipeline.add_node(node2)
+node1.connect(node2)
+
+# Execute pipeline
+result = await pipeline.execute(input_text)
+```
+
+### Optimized Pipeline Features
+
+1. **Batch Processing**
+
+    ```python
+    from bedrock_llm.pipeline import BatchNode, BatchConfig
+
+    batch_node = BatchNode(
+        "batch-embeddings",
+        embed_batch_func,
+        BatchConfig(batch_size=32, max_wait_time=1.0)
+    )
+    ```
+
+2. **Cached Processing**
+
+    ```python
+    from bedrock_llm.pipeline import CachedNode
+
+    cached_node = CachedNode(
+        "cached-embeddings",
+        embed_func,
+        cache_size=1000
+    )
+    ```
+
+3. **Parallel Processing**
+
+    ```python
+    from bedrock_llm.pipeline import ParallelNode
+
+    parallel_node = ParallelNode(
+        "parallel-process",
+        process_func,
+        max_workers=4
+    )
+    ```
+
+4. **Type-Safe Nodes**
+
+    ```python
+    from bedrock_llm.pipeline import TypedNode
+
+    typed_node = TypedNode[str, float](
+        "typed-process",
+        process_func
+    )
+    ```
+
+5. **Data Filtering**
+
+    ```python
+    from bedrock_llm.pipeline import FilterNode
+
+    filter_node = FilterNode(
+        "filter-data",
+        lambda x: x > 0.5
+    )
+    ```
+
+### Pipeline Optimization
+
+The pipeline system includes several optimization features:
+
+1. **Batch Processing**
+   - Automatically batches inputs for improved throughput
+   - Configurable batch sizes and timing
+   - Handles partial batches efficiently
+
+2. **Caching**
+   - In-memory caching of results
+   - LRU cache implementation
+   - Configurable cache sizes
+
+3. **Parallel Execution**
+   - Thread pool-based parallel processing
+   - Configurable worker count
+   - Automatic resource management
+
+4. **Type Safety**
+   - Generic type support
+   - Runtime type checking
+   - Type-safe node connections
+
+5. **Event-Driven Architecture**
+   - Reactive programming model
+   - Non-blocking execution
+   - Event-based data flow
 
 ## Core Components
 

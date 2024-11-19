@@ -25,8 +25,15 @@ This structure allows for seamless integration of LLM capabilities with robust d
 - Asynchronous and synchronous function support
 - Performance monitoring and logging functionality
 - Support for Retrieval-Augmented Generation (RAG)
+- Optimized Pipeline System:
+  - Modular node-based architecture
+  - Batch processing with configurable parameters
+  - In-memory caching with size management
+  - Parallel processing with thread pools
+  - Type-safe node connections
+  - Event-driven data flow
+  - Filter nodes for data validation
 - Multi-Agent systems (in progress)
-- Workflows, nodes, and event-based systems (coming soon)
 - Image generation, speech-to-text (STT), and text-to-speech (TTS) support (coming soon)
 
 ## Installation
@@ -77,9 +84,7 @@ Before using the library, make sure you have your AWS credentials properly confi
     aws bedrock list-foundation-models --profile bedrock
     ```
 
-## Usage
-
-Here's a quick example of how to use the Bedrock LLM library:
+## Quick Start
 
 ### Simple text generation
 
@@ -159,6 +164,36 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+```
+
+### Pipeline Usage
+
+```python
+from bedrock_llm.pipeline import Pipeline, BatchNode, CachedNode
+
+# Create a pipeline for efficient text processing
+pipeline = Pipeline("text-processor")
+
+# Add optimized nodes
+batch_node = BatchNode(
+    "batch-embeddings",
+    embed_batch_func,
+    batch_size=32
+)
+
+cache_node = CachedNode(
+    "cached-process",
+    process_func,
+    cache_size=1000
+)
+
+# Connect nodes
+pipeline.add_node(batch_node)
+pipeline.add_node(cache_node)
+batch_node.connect(cache_node)
+
+# Process data
+result = await pipeline.execute(input_data)
 ```
 
 ### Agent Features

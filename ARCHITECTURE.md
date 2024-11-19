@@ -82,7 +82,7 @@ class AsyncClient(BaseClient):
             yield self._process_chunk(chunk)
 ```
 
-###### Key Features
+###### Key Features AsyncClient
 
 - Non-blocking operations
 - Connection pooling
@@ -139,6 +139,66 @@ The model layer handles specific LLM implementations:
 - Model-specific implementations (Claude, Llama, etc.)
 - Custom parameter handling and optimization
 - Response parsing and formatting
+
+### Pipeline Layer (pipeline/)
+
+The Pipeline Layer provides a flexible and efficient system for building data processing pipelines with various optimizations:
+
+#### Core Pipeline Components
+
+```python
+class Pipeline:
+    # Base pipeline implementation
+    # Supports DAG-based workflow execution
+    # Provides synchronous and asynchronous execution modes
+```
+
+##### Key Features Pipeline
+
+1. **Node-based Architecture**
+   - Modular pipeline nodes
+   - Flexible node connections
+   - Status tracking and monitoring
+   - Input/output management
+   - Metadata handling
+
+2. **Execution Models**
+   - Synchronous and asynchronous processing
+   - Event-driven data flow
+   - Error propagation and handling
+   - Context management
+
+#### Optimized Pipeline Features
+
+1. **Batch Processing**
+   - Configurable batch sizes
+   - Automatic batch timing
+   - Minimum batch thresholds
+   - Maximum wait time controls
+
+2. **Caching Support**
+   - In-memory caching
+   - Configurable cache sizes
+   - Automatic cache management
+   - Cache key customization
+
+3. **Parallel Processing**
+   - Thread pool execution
+   - Configurable worker count
+   - Resource management
+   - Task scheduling
+
+4. **Type Safety**
+   - Generic type support
+   - Input/output type validation
+   - Type-safe node connections
+   - Runtime type checking
+
+5. **Data Filtering**
+   - Conditional data processing
+   - Custom filter conditions
+   - Stream filtering
+   - Data validation
 
 ### Configuration System
 
