@@ -2,7 +2,6 @@
 
 from typing import List, Optional, Tuple, Union
 
-from ..aws_clients import AWSClientManager
 from ..config.base import RetryConfig
 from ..models.embeddings import (BaseEmbeddingsImplementation,
                                  EmbeddingInputType, EmbeddingVector, Metadata)
@@ -35,10 +34,6 @@ class EmbedClient(BaseClient):
                 f"Model {model_name} does not support embeddings"
             )
         self.profile_name = kwargs.pop("profile_name", None)
-        self._sync_client = AWSClientManager.get_sync_client(
-            self.region_name,
-            self.profile_name
-        )
 
     def embed(
         self,

@@ -63,6 +63,20 @@ class BaseClient(ABC):
         self.max_iterations = max_iterations
         self._async_client = None
 
+    async def __aenter__(self):
+        """Async context manager enter."""
+        await self._get_async_client()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        await self.close()
+
+    async def open(self):
+        """Initialize the async client if not already initialized."""
+        if self._async_client is None:
+            self._async_client = await self._get_async_client()
+
     async def _get_async_client(self):
         """Get or create async AWS client."""
         if self._async_client is None:
