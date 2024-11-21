@@ -34,8 +34,14 @@ class AsyncClient(BaseClient):
         )
         self._async_client = None
 
-    async def open(self,):
-        self._async_client = await self._get_async_client()
+    async def __aenter__(self):
+        """Async context manager enter."""
+        await self._get_async_client()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        await self.close()
 
     async def generate_async(
         self,
