@@ -10,7 +10,7 @@ from ..schema.cache import CacheControl
 class PropertyAttr(BaseModel):
     """Property attributes for tool parameters."""
 
-    type: Literal["string", "integer", "float", "boolean"] = Field(
+    type: Literal["string", "integer", "float", "boolean", "array"] = Field(
         description="Data type of the parameter"
     )
     enum: Optional[List[str]] = Field(
