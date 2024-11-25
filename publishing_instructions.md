@@ -8,22 +8,25 @@ To publish your Bedrock LLM library, follow these steps:
    - Version number is updated in `setup.py`
 
 2. Create a distribution package:
-   ```
+
+   ```bash
    python setup.py sdist bdist_wheel
    ```
 
 3. Install Twine if you haven't already:
-   ```
+
+   ```bash
    pip install twine
    ```
 
 4. Upload your package to PyPI:
-   ```
+
+   ```bash
    twine upload dist/*
    ```
 
 5. Verify the upload by checking the PyPI page for your package:
-   https://pypi.org/project/bedrock-llm/
+   <https://pypi.org/project/bedrock-llm/>
 
 6. Update the README.md with the new version number and any new features or changes.
 

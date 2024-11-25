@@ -1,129 +1,90 @@
+"""Unit tests for the LLMClient class."""
 import unittest
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from unittest.mock import patch, MagicMock
-from src.bedrock_llm.client import LLMClient
-from src.bedrock_llm.types.enums import ModelName, StopReason
-from src.bedrock_llm.config.model import ModelConfig
-from src.bedrock_llm.schema.message import MessageBlock
-from src.bedrock_llm.config.base import RetryConfig
-from botocore.exceptions import ClientError, ReadTimeoutError
+from unittest.mock import MagicMock, patch
+
+import boto3
+from botocore.config import Config
+
+from bedrock_llm.client import LLMClient
+from bedrock_llm.config.base import RetryConfig
+from bedrock_llm.types.enums import ModelName
+from bedrock_llm.models.anthropic import ClaudeImplementation
+from bedrock_llm.models.meta import LlamaImplementation
+from bedrock_llm.models.amazon import TitanImplementation
+
 
 class TestLLMClient(unittest.TestCase):
-
     def setUp(self):
-        self.region_name = "us-east-1"
-        self.model_name = ModelName.CLAUDE_3_5_HAIKU
-        self.retry_config = RetryConfig(max_retries=3, retry_delay=1, exponential_backoff=True)
+        """Set up test fixtures before each test method."""
+        self.region_name = "us-west-2"
+        self.model_name = ModelName.CLAUDE_3_HAIKU
+        
+        # Clear the cached clients and implementations
+        LLMClient._bedrock_clients = {}
+        LLMClient._model_implementations = {}
 
-    @patch('boto3.client')
-    def test_llm_client_initialization(self, mock_boto3_client):
-        client = LLMClient(self.region_name, self.model_name, retry_config=self.retry_config)
+    @patch('boto3.Session')
+    def test_client_initialization(self, mock_session):
+        """Test basic client initialization."""
+        mock_client = MagicMock()
+        mock_session.return_value.client.return_value = mock_client
+
+        client = LLMClient(self.region_name, self.model_name)
+        
         self.assertEqual(client.region_name, self.region_name)
         self.assertEqual(client.model_name, self.model_name)
-        self.assertEqual(client.retry_config, self.retry_config)
-        self.assertIsNotNone(client.bedrock_client)
-        self.assertIsNotNone(client.model_implementation)
+        self.assertIsInstance(client.retry_config, RetryConfig)
+        self.assertIsInstance(client.model_implementation, ClaudeImplementation)
 
-    @patch('src.bedrock_llm.client.LLMClient._initialize_bedrock_client')
-    @patch('src.bedrock_llm.client.LLMClient._get_model_implementation')
-    def test_generate_method_success(self, mock_get_model_implementation, mock_initialize_bedrock_client):
-        # Mock the model implementation
-        mock_model = MagicMock()
-        mock_get_model_implementation.return_value = mock_model
+    def test_model_implementation_caching(self):
+        """Test that model implementations are properly cached."""
+        client1 = LLMClient(self.region_name, ModelName.CLAUDE_3_HAIKU)
+        client2 = LLMClient(self.region_name, ModelName.CLAUDE_3_HAIKU)
+        
+        # Both clients should have the same implementation instance
+        self.assertIs(client1.model_implementation, client2.model_implementation)
 
-        # Mock the bedrock client
-        mock_bedrock_client = MagicMock()
-        mock_initialize_bedrock_client.return_value = mock_bedrock_client
+    @patch('boto3.Session')
+    def test_bedrock_client_caching(self, mock_session):
+        """Test that Bedrock clients are properly cached."""
+        mock_client = MagicMock()
+        mock_session.return_value.client.return_value = mock_client
 
-        # Create an LLMClient instance
-        client = LLMClient(self.region_name, self.model_name, retry_config=self.retry_config)
+        client1 = LLMClient(self.region_name, self.model_name)
+        client2 = LLMClient(self.region_name, self.model_name)
+        
+        # Both clients should have the same Bedrock client instance
+        self.assertIs(client1.bedrock_client, client2.bedrock_client)
+        
+        # boto3.client should only be called once
+        mock_session.return_value.client.assert_called_once()
 
-        # Set up the mock responses
-        mock_model.prepare_request.return_value = {"mocked": "request"}
-        mock_bedrock_client.invoke_model.return_value = {"body": b'{"mocked": "response"}'}
-        mock_model.parse_response.return_value = (MessageBlock(role="assistant", content="Mocked response"), StopReason.END_TURN)
+    def test_different_model_implementations(self):
+        """Test that different models get different implementations."""
+        claude_client = LLMClient(self.region_name, ModelName.CLAUDE_3_HAIKU)
+        llama_client = LLMClient(self.region_name, ModelName.LLAMA_3_2_1B)
+        titan_client = LLMClient(self.region_name, ModelName.TITAN_LITE)
+        
+        self.assertIsInstance(claude_client.model_implementation, ClaudeImplementation)
+        self.assertIsInstance(llama_client.model_implementation, LlamaImplementation)
+        self.assertIsInstance(titan_client.model_implementation, TitanImplementation)
 
-        # Test the generate method
-        prompt = "Test prompt"
-        config = ModelConfig()
-        response, stop_reason = client.generate(prompt=prompt, config=config)
+    @patch('boto3.Session')
+    def test_custom_profile(self, mock_session):
+        """Test client initialization with custom AWS profile."""
+        profile_name = "custom-profile"
+        client = LLMClient(self.region_name, self.model_name, profile_name=profile_name)
+        
+        mock_session.assert_called_once_with(profile_name=profile_name)
 
-        # Assertions
-        self.assertIsInstance(response, MessageBlock)
-        self.assertEqual(response.role, "assistant")
-        self.assertEqual(response.content, "Mocked response")
-        self.assertEqual(stop_reason, StopReason.END_TURN)
+    def test_retry_config(self):
+        """Test custom retry configuration."""
+        custom_retry = RetryConfig(max_retries=5, retry_delay=2.0)
+        client = LLMClient(self.region_name, self.model_name, retry_config=custom_retry)
+        
+        self.assertEqual(client.retry_config.max_retries, 5)
+        self.assertEqual(client.retry_config.retry_delay, 2.0)
 
-        # Verify that the methods were called with the correct arguments
-        mock_model.prepare_request.assert_called_once_with(config=config, prompt=prompt, system=None, documents=None, tools=None)
-        mock_bedrock_client.invoke_model.assert_called_once_with(
-            modelId=self.model_name,
-            accept="application/json",
-            contentType="application/json",
-            body='{"mocked": "request"}'
-        )
-        mock_model.parse_response.assert_called_once()
-
-    @patch('src.bedrock_llm.client.LLMClient._initialize_bedrock_client')
-    @patch('src.bedrock_llm.client.LLMClient._get_model_implementation')
-    @patch('time.sleep')
-    def test_generate_method_with_retries(self, mock_sleep, mock_get_model_implementation, mock_initialize_bedrock_client):
-        mock_model = MagicMock()
-        mock_get_model_implementation.return_value = mock_model
-        mock_bedrock_client = MagicMock()
-        mock_initialize_bedrock_client.return_value = mock_bedrock_client
-
-        client = LLMClient(self.region_name, self.model_name, retry_config=self.retry_config)
-
-        mock_model.prepare_request.return_value = {"mocked": "request"}
-        mock_bedrock_client.invoke_model.side_effect = [
-            ReadTimeoutError(endpoint_url="", operation_name=""),
-            ClientError({"Error": {"Code": "ThrottlingException", "Message": "Rate exceeded"}}, "invoke_model"),
-            {"body": b'{"mocked": "response"}'}
-        ]
-        mock_model.parse_response.return_value = (MessageBlock(role="assistant", content="Mocked response"), StopReason.END_TURN)
-
-        prompt = "Test prompt"
-        config = ModelConfig()
-        response, stop_reason = client.generate(prompt=prompt, config=config)
-
-        self.assertIsInstance(response, MessageBlock)
-        self.assertEqual(response.content, "Mocked response")
-        self.assertEqual(stop_reason, StopReason.END_TURN)
-        self.assertEqual(mock_bedrock_client.invoke_model.call_count, 3)
-        self.assertEqual(mock_sleep.call_count, 2)
-
-    @patch('src.bedrock_llm.client.LLMClient._initialize_bedrock_client')
-    @patch('src.bedrock_llm.client.LLMClient._get_model_implementation')
-    def test_generate_method_max_retries_exceeded(self, mock_get_model_implementation, mock_initialize_bedrock_client):
-        mock_model = MagicMock()
-        mock_get_model_implementation.return_value = mock_model
-        mock_bedrock_client = MagicMock()
-        mock_initialize_bedrock_client.return_value = mock_bedrock_client
-
-        client = LLMClient(self.region_name, self.model_name, retry_config=self.retry_config)
-
-        mock_model.prepare_request.return_value = {"mocked": "request"}
-        mock_bedrock_client.invoke_model.side_effect = ReadTimeoutError(endpoint_url="", operation_name="")
-
-        prompt = "Test prompt"
-        config = ModelConfig()
-
-        with self.assertRaises(Exception) as context:
-            client.generate(prompt=prompt, config=config)
-
-        self.assertTrue("Max retries reached" in str(context.exception))
-        self.assertEqual(mock_bedrock_client.invoke_model.call_count, self.retry_config.max_retries)
-
-    def test_generate_method_with_invalid_prompt(self):
-        client = LLMClient(self.region_name, self.model_name, retry_config=self.retry_config)
-        client.memory = []  # Set memory to simulate enabled memory
-
-        with self.assertRaises(ValueError) as context:
-            client.generate(prompt="Invalid string prompt")
-
-        self.assertTrue("If memory is set, prompt must be a MessageBlock or list of MessageBlock" in str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,7 +1,13 @@
 pydantic>=2.0.0
-boto3>=1.18.0
-botocore>=1.21.0
+boto3
+aiobotocore
 jinja2>=3.1.2
 psutil>=5.9.0
 pytz>=2023.3
 termcolor>=2.3.0
+databases[postgresql]>=0.7.0
+sqlalchemy>=2.0.0
+asyncpg>=0.27.0
+types-redis>=4.6.0
+types-pytz
+rx==3.2.0

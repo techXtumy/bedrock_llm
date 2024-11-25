@@ -1,26 +1,19 @@
 # Add for print console with color
 from termcolor import cprint
 
-from bedrock_llm import LLMClient, ModelName, MessageBlock, ModelConfig, RetryConfig
-from bedrock_llm.schema.tools import ToolMetadata, InputSchema, PropertyAttr
-
+from bedrock_llm import Client, ModelConfig, ModelName, RetryConfig
+from bedrock_llm.schema import InputSchema, PropertyAttr, ToolMetadata, MessageBlock
 
 # Create a LLM client
-client = LLMClient(
-    region_name="us-east-1",
-    model_name=ModelName.TITAN_PREMIER,
+client = Client(
+    region_name="us-west-2",
+    model_name=ModelName.LLAMA_3_2_3B,
     memory=[],
-    retry_config=RetryConfig(
-        max_attempts=3
-    )
+    retry_config=RetryConfig(max_attempts=3),
 )
 
 # Create a configuration for inference parameters
-config = ModelConfig(
-    temperature=0.1,
-    top_p=0.9,
-    max_tokens=512
-)
+config = ModelConfig(temperature=0.1, top_p=0.9, max_tokens=512)
 
 # Create tool definition
 get_weather_tool = ToolMetadata(
@@ -30,12 +23,11 @@ get_weather_tool = ToolMetadata(
         type="object",
         properties={
             "location": PropertyAttr(
-                type="string",
-                description="The city to get the weather of"
+                type="string", description="The city to get the weather of"
             )
         },
-        required=["location"]
-    )
+        required=["location"],
+    ),
 )
 
 # Create a system prompt with a list of examples
@@ -44,15 +36,16 @@ prompt = [
     MessageBlock(role="assistant", content="The capital of France is Paris."),
     MessageBlock(role="user", content="What is the capital of Germany?"),
     MessageBlock(role="assistant", content="The capital of Germany is Berlin."),
-    MessageBlock(role="user", content="What is your name and what is the weather in the capital of Italy?")
+    MessageBlock(
+        role="user",
+        content="What is your name and what is the weather in the capital of Italy?",
+    ),
 ]
 system = "You are a helpful assistant. You have access to realtime information. You can use tools to get the real time data weather of a city."
 
 # Invoke the model and get results
 response, stop_reason = client.generate(
-    config=config, 
-    prompt=prompt,
-    tools=[get_weather_tool]
+    config=config, prompt=prompt, tools=[get_weather_tool]
 )
 
 # Print out the results
@@ -61,7 +54,7 @@ cprint(stop_reason, "red")
 
 # Send the tool result back to the model
 response, stop_reason = client.generate(
-    config=config, 
+    config=config,
     prompt=MessageBlock(role="tool", content="20*C"),
 )
 
